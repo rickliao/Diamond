@@ -1,0 +1,9 @@
+PREFIX bsbm-inst-vend1: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromVendor1/>
+
+SELECT DISTINCT ?property ?hasValue ?isValueOf
+WHERE {
+  { bsbm-inst-vend1:Offer2 ?property ?hasValue }
+  UNION
+  { ?isValueOf ?property bsbm-inst-vend1:Offer2 }
+}
+

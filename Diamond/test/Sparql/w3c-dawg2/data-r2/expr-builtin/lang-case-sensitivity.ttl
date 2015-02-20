@@ -1,0 +1,7 @@
+# Data: minimal test of plain literal language sensitivity
+# $Id: lang-case-sensitivity.ttl,v 1.1 2013/01/15 14:12:34 carlosreyna Exp $
+
+@prefix     : <http://example/> .
+
+:x2 :p "xyz"@en .
+:x3 :p "xyz"@EN .

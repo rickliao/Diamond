@@ -1,0 +1,11 @@
+PREFIX a: <http://www.w3.org/2002/07/owl#>
+[
+  CONSTRUCT {
+    ?x a:legal 42
+  }
+  WHERE {
+    ?x a:age ?y 
+    FILTER(?y < 18)
+  }
+]
+

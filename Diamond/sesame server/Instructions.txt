@@ -1,0 +1,14 @@
+How do you map the triples in Sesame repository to deferencable uris?
+
+http://localhost:8080/openrdf-workbench/repositories/InMemory01/explore?resource=%3Chttp%3A%2F%2Fwww4.wiwiss.fu-berlin.de%2Fbizer%2Fbsbm%2Fv01%2Finstances%2FProductType1%3E
+
+map to http://localhost:8080/bsbm/instances/ProductType1 ?
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+So assume you have Apache Tomcat running.
+
+Use Pubby. Download it from here:
+http://wifo5-03.informatik.uni-mannheim.de/pubby/
+
+Once you download it, one of the folders you will see is "webapp". Rename that to bsbm and put that in the webapp folder in Tomcat.
+
+In the new bsbm folder, you will see a WEB-INF/config.n3 file. Replace it with the one I am attaching. Open the new config.n3 and put in the correct sparql endpoint. I have http://localhost:8080/openrdf-sesame/repositories/bsbm. Replace it with what you have on your local machine.

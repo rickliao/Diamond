@@ -1,0 +1,14 @@
+@prefix :  <http://www.example.org/> .
+
+:r1 :name :Alice .
+:r1 :studies "Engineering" .
+:r1 :order :o1 .
+:r2 :name :Bob .
+:r2 :studies "Business" .
+:r2 :order :o2 .
+:r3 :name :Charlotte .
+:r3 :works "Management" .
+:r3 :order :o3 .
+:r4 :name :Dennis .
+:r4 :works "Developer" .
+:r4 :order :o4 .

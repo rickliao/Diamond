@@ -1,0 +1,5 @@
+#Q1: BGP
+SELECT ?x
+WHERE {
+  ?x <http://www.example.org/knows> <http://www.example.org/Bob>
+}

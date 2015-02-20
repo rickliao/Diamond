@@ -1,0 +1,15 @@
+@prefix dc10:  <http://purl.org/dc/elements/1.0/> .
+@prefix dc11:  <http://purl.org/dc/elements/1.1/> .
+@prefix test:  <http://test/> .
+
+
+<http://www.example.org/a>  dc10:title     "SPARQL Query Language Tutorial" .
+
+<http://www.example.org/b>  dc11:title     "SPARQL Protocol Tutorial" .
+
+<http://www.example.org/c>  dc10:title     "SPARQL" .
+<http://www.example.org/c>  dc11:title     "SPARQL (updated)" .
+
+<http://www.example.org/d>  dc11:title     "Test" .
+<http://www.example/org/d>  test:title     "Test (updated)" .
+

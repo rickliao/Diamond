@@ -1,0 +1,14 @@
+#Q10: Union
+prefix :  <http://www.example.org/> 
+SELECT ?name ?profession ?order
+WHERE {
+  ?emp :name ?name .
+  {
+    ?emp :studies ?profession.
+    FILTER(?profession = "Engineering")
+  } UNION {
+    ?emp :works ?profession.
+    FILTER(?profession = "Developer")
+  }
+  ?emp :order ?order . 
+}

@@ -1,0 +1,9 @@
+#Q8: Standard Negation (x . -y)
+SELECT ?name
+WHERE {
+  ?x <http://www.example.org/name> ?name .
+  OPTIONAL {
+    ?x <http://www.example.org/relates> ?y .
+  }
+  FILTER (!bound(?y))
+}

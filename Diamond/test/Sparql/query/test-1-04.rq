@@ -1,0 +1,4 @@
+SELECT  *
+WHERE
+    { ?x ?y "v-1-1" }
+    

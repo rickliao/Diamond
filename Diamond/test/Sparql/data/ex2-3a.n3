@@ -1,0 +1,4 @@
+@prefix foaf:    <http://xmlns.com/foaf/0.1/> .
+
+<http://www.example.org/a>  foaf:name   "Johnny Lee Outlaw" .
+<http://www.example.org/a>  foaf:mbox   <mailto:jlow@example.com> .

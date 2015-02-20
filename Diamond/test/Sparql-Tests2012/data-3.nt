@@ -1,0 +1,9 @@
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+
+<http://www.example.org/r1> <http://www.example.org/name> <http://www.example.org/Alice> .
+<http://www.example.org/r1> <http://www.example.org/age> "21"^^xsd:integer .
+<http://www.example.org/r2> <http://www.example.org/name> <http://www.example.org/Bob> .
+<http://www.example.org/r2> <http://www.example.org/age> "12"^^xsd:integer .
+<http://www.example.org/r3> <http://www.example.org/name> <http://www.example.org/Charlotte> .
+<http://www.example.org/r3> <http://www.example.org/age> "11"^^xsd:integer .

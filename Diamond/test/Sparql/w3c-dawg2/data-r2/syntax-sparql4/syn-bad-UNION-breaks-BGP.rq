@@ -1,0 +1,11 @@
+# bad: re-used BNode label after UNION
+# $Id: syn-bad-UNION-breaks-BGP.rq,v 1.1 2013/01/15 14:12:36 carlosreyna Exp $
+# This isn't necessarily a *syntax* test, but references to bnode labels
+# may not span basic graph patterns.
+
+PREFIX : <http://example.org/>
+SELECT *
+WHERE
+{
+  _:a ?p ?v1 { ?s <p1> ?o } UNION { ?s <p2> ?o } _:a ?p ?v2
+}

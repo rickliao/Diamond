@@ -1,0 +1,7 @@
+# $Id: syn-blabel-cross-filter.rq,v 1.1 2013/01/15 14:12:36 carlosreyna Exp $
+# BNode label used across a FILTER.
+PREFIX : <http://xmlns.com/foaf/0.1/>
+
+ASK { _:who :homepage ?homepage 
+      FILTER REGEX(?homepage, "^http://example.org/") 
+      _:who :schoolHomepage ?schoolPage }

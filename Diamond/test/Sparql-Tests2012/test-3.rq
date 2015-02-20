@@ -1,0 +1,7 @@
+#Q3: Filter 
+SELECT *
+WHERE {
+  ?x <http://www.example.org/name> ?name .
+  ?x <http://www.example.org/age> ?z
+  FILTER (?z > 11)
+}

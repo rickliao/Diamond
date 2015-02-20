@@ -1,0 +1,10 @@
+@prefix ex: <http://example.com/0.1/> .
+
+ex:person1 ex:type ex:guest .
+ex:person1 ex:name "John" .
+
+ex:person2 ex:type ex:guest .
+ex:person2 ex:name "Kate" .
+
+ex:var ex:value 1.0 .
+ex:var ex:value3 1 .

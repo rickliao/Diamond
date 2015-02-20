@@ -1,0 +1,15 @@
+#Q9: Double Negation (x . -(y . -z ))
+# Select those x who are not related to any y who isn't related to some z
+SELECT ?name
+WHERE {
+  ?x <http://www.example.org/name> ?name .
+  OPTIONAL {
+    ?x <http://www.example.org/relates> ?y .
+    OPTIONAL {
+      ?y <http://www.example.org/relates> ?z .
+    }
+    FILTER(! bound(?z))
+  }
+  FILTER(! bound(?y))
+}
+

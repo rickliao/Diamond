@@ -1,0 +1,5 @@
+select ?x ?y
+where {
+<http://dbpedia.org/resource/Austin,_Texas> <http://dbpedia.org/ontology/isPartOf> ?x.
+?x <http://www.w3.org/2002/07/owl#sameAs> ?y .
+}

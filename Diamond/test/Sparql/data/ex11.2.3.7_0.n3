@@ -1,0 +1,6 @@
+@prefix foaf:       <http://xmlns.com/foaf/0.1/> .
+@prefix rdf:        <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+<http://www.example.org/a>  foaf:name       "Robert"@EN.
+<http://www.example.org/a>  foaf:name       "Roberto"@ES.
+<http://www.example.org/a>  foaf:mbox       <mailto:bob@work.example> .

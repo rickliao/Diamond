@@ -1,0 +1,7 @@
+# q-langMatches-de-de.rq
+# $Id: q-langMatches-de-de.rq,v 1.1 2013/01/15 14:12:34 carlosreyna Exp $
+
+PREFIX : <http://example.org/#>
+
+SELECT *
+{ :x ?p ?v . FILTER langMatches(lang(?v), "de-de") . }

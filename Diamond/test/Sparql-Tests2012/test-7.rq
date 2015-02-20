@@ -1,0 +1,13 @@
+#Q7: Filtered Left Join
+SELECT ?name ?age ?name2 ?age2
+WHERE {
+  ?x <http://www.example.org/name> ?name ;
+     <http://www.example.org/type> <http://www.example.org/chosen> ;
+     <http://www.example.org/age> ?age .
+  OPTIONAL {
+    ?x <http://www.example.org/relates> ?y .
+    ?y <http://www.example.org/name> ?name2 ;
+       <http://www.example.org/age> ?age2 .
+    FILTER (?age2 > 20)
+  }
+}

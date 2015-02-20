@@ -1,0 +1,5 @@
+PREFIX bsbm-inst-rev1: <http://www4.wiwiss.fu-berlin.de/bizer/bsbm/v01/instances/dataFromRatingSite1/>
+PREFIX rev: <http://purl.org/stuff/rev#>
+
+SELECT DISTINCT ?x
+WHERE { bsbm-inst-rev1:Review12 rev:reviewer ?x }

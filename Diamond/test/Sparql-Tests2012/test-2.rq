@@ -1,0 +1,5 @@
+#Q2: BGP
+SELECT *
+WHERE {
+  ?x ?y ?z
+}

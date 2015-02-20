@@ -1,0 +1,10 @@
+PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?pub ?topic ?topicLabel
+WHERE
+{
+	<http://data.semanticweb.org/conference/eswc/2009/proceedings> swc:hasPart ?pub .
+	?pub swc:hasTopic ?topic .
+	?topic rdfs:label ?topicLabel .
+}

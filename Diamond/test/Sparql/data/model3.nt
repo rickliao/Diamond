@@ -1,0 +1,6 @@
+# Anonymous nodes
+
+<http://www.example.org/a> <http://rdf.hp.com/p1> "v-a-1".
+<http://www.example.org/a> <http://rdf.hp.com/p2> "v-a-2".
+
+<http://www.example.org/b> <http://rdf.hp.com/p> <http://www.example.org/a> .

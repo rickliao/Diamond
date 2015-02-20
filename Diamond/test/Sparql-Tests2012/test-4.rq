@@ -1,0 +1,8 @@
+#Q4: Inner Join
+SELECT ?name
+WHERE {
+  ?x <http://www.example.org/type> <http://www.example.org/Book>;
+     <http://www.example.org/author> ?name.
+  ?y <http://www.example.org/type> <http://www.example.org/Article>;
+     <http://www.example.org/author> ?name.
+}

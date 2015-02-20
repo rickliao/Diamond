@@ -1,0 +1,260 @@
+Step 1: Create a text file with Spin rules.
+    Supported rules and clauses:
+        * CONSTRUCT {} - Create new RDF triples
+        * DELETE {} - Delete RDF triples
+        * DELETE {} INSERT {} - Modify RDF triples.
+        * OPTIONAL {} - Specify triple whose presence is optional.
+        * Filter(RelExpr) - Filter tokens.
+        * Bind(RelExpr AS Var) - Bind variable to a value.
+	Each rule is surrounded by [].
+
+	Example of a valid SPIN Rules File: rules
+    
+		PREFIX ex: <http://example.com/0.1/>
+
+		[ CONSTRUCT {
+		  ex:s1 ex:type ex:seating .
+		  ex:s1 ex:seat1 ?n1 .
+		} WHERE {
+		  ?p1 ex:type ex:guest .
+		  ?p1 ex:name ?n1 .
+		  OPTIONAL {
+		  	?p1 ex:age ?a .
+		  }
+		} ]
+
+		[ DELETE {
+		  ex:s1 ex:type ex:seating .
+		  ex:s1 ex:seat1 ?n1 .
+		} WHERE {
+		  ?p1 ex:type ex:guest .
+		  ?p1 ex:name ?n1 .
+		  FILTER(?n1 != "Kate") .
+		} ]
+
+		[ DELETE {
+		  ex:var ex:value ?x .
+		} INSERT {
+		  ex:var ex:value2 ?y .
+		} WHERE {
+		  ex:var ex:value ?x .
+		  BIND(?x + 1 AS ?y) .
+		} ]
+
+	Note: Negation is equivalent to OPTIONAL {} FILTER(!?x)
+	Example: Create (ex:var ex:value 0) if (ex:var ex:value ?x) not present
+	[Note: Works only with single rules! Fixed version will be released soon]
+	
+		[ CONSTRUCT {
+		   ex:var ex:value 0 .
+		} WHERE {
+			ex:var ex:type ex:integer . 
+		  OPTIONAL {
+		    ex:var ex:value ?x .
+		  } FILTER(!?x)
+		} ]
+
+Step 2: Create a .n3 Data File with RDF triples.
+	SPIN Rules are evaluated on the set of data in this .n3 file
+	
+	Example of a valid RDF Data File: data.n3
+	
+		@prefix ex: <http://example.com/0.1/> .
+	
+		ex:person1 ex:type ex:guest .
+		ex:person1 ex:name "John" .
+	
+		ex:person2 ex:type ex:guest .
+		ex:person2 ex:name "Kate" .
+	
+		ex:var ex:value 1.0 .
+
+Step 3: Run: java -jar SpinDiamond.jar -spinfile <rules> -datafile <data.n3>
+	At this point the Compiler will compile the SPIN rules and insert all RDF triples in a TokenQueue. Upon success, you will see a terminal prompt in which you can enter commands. A full list with commands can be obtained via the 'help' command.
+
+Step 4: Terminology:
+	Following are some important concepts to keep in mind:
+		* TokenQueue is the structure where RDF triples are initially stored.
+		* Triples are wrapped into tokens and processed one by one. Each token contains:
+			* Token tag: +- indicating whether this is inserion or deletion token.
+			* Timestamp: auto-assigned
+			* Bindings: A set of RDF triples with their matched TriplePatterns
+			* Binds: Variables matched to values via the BIND() clause
+		* TriplePatterns: The selections in the WHERE {} clause
+		* ConflictSet - a set of antescedents with their corresponding rules.
+			If a token contains enough bindings to satisfy the select clause of a SPIN rule it is placed in the ConflictSet. The RDF triples in the token are called antescedents and they are associate with a particular Spin rule that generates a consequent set. The consequent set contains + or - triples which are placed both in the TokenQueue and the WorkingMemory.
+		* WorkingMemory - represents the Result set
+
+Step 5: Sample immediate execution of SpinDiamond (on rules and data.n3)
+
+	java -jar SpinDiamond.jar -spinfile rules -datafile data.n3 
+
+	usage: SpinDiamond.jar [parameters]
+		 -spinfile   <file>      Execute a SPIN Rules File on local data.
+		 -datafile   <file>      Input RDF Data File to execute query on.
+		 -tutorial               Quick tutorial.
+
+	Type 'help' for a list with all commands.
+
+	> result-set
+	ResultSet:
+	(http://example.com/0.1/var, http://example.com/0.1/value, 1.0)
+	(http://example.com/0.1/person1, http://example.com/0.1/name, "John")
+	(http://example.com/0.1/person1, http://example.com/0.1/type, http://example.com/0.1/guest)
+	(http://example.com/0.1/person2, http://example.com/0.1/type, http://example.com/0.1/guest)
+	(http://example.com/0.1/person2, http://example.com/0.1/name, "Kate")
+
+	> run
+	Max Number Rule-fires: 100000
+
+	Fire SpinConstruct[0] for: (PLUS, 25, [(?p1=http://example.com/0.1/person1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/guest=http://example.com/0.1/guest), (?p1=http://example.com/0.1/person1, http://example.com/0.1/name=http://example.com/0.1/name, ?n1="John")], {})
+	New Token: (PLUS, 27, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/seating=http://example.com/0.1/seating)], {})
+	New Token: (PLUS, 28, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/seat1=http://example.com/0.1/seat1, ?n1="John")], {})
+
+	Fire SpinModify[1] for: (PLUS, 26, [(?p1=http://example.com/0.1/person1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/guest=http://example.com/0.1/guest), (?p1=http://example.com/0.1/person1, http://example.com/0.1/name=http://example.com/0.1/name, ?n1="John")], {})
+	New Token: (MINUS, 29, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/seating=http://example.com/0.1/seating)], {})
+	New Token: (MINUS, 30, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/seat1=http://example.com/0.1/seat1, ?n1="John")], {})
+
+	Fire SpinConstruct[0] for: (PLUS, 50, [(?p1=http://example.com/0.1/person2, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/guest=http://example.com/0.1/guest), (?p1=http://example.com/0.1/person2, http://example.com/0.1/name=http://example.com/0.1/name, ?n1="Kate")], {})
+	New Token: (PLUS, 51, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/seating=http://example.com/0.1/seating)], {})
+	New Token: (PLUS, 52, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/seat1=http://example.com/0.1/seat1, ?n1="Kate")], {})
+
+	Fire SpinModify[2] for: (PLUS, 61, [(http://example.com/0.1/var=http://example.com/0.1/var, http://example.com/0.1/value=http://example.com/0.1/value, ?x=1.0)], {?y=2.0})
+	New Token: (PLUS, 62, [(http://example.com/0.1/var=http://example.com/0.1/var, http://example.com/0.1/value2=http://example.com/0.1/value2, ?y=2.0)], {})
+	New Token: (MINUS, 63, [(http://example.com/0.1/var=http://example.com/0.1/var, http://example.com/0.1/value=http://example.com/0.1/value, ?x=1.0)], {})
+
+	> result-set
+	ResultSet:
+	(http://example.com/0.1/s1, http://example.com/0.1/type, http://example.com/0.1/seating)
+	(http://example.com/0.1/person1, http://example.com/0.1/name, "John")
+	(http://example.com/0.1/person1, http://example.com/0.1/type, http://example.com/0.1/guest)
+	(http://example.com/0.1/s1, http://example.com/0.1/seat1, "Kate")
+	(http://example.com/0.1/person2, http://example.com/0.1/type, http://example.com/0.1/guest)
+	(http://example.com/0.1/var, http://example.com/0.1/value2, 2.0)
+	(http://example.com/0.1/person2, http://example.com/0.1/name, "Kate")
+
+	> exit
+
+Step 6: Detailed sample execution of SpinDiamond (on rules and data.n3)
+	
+	java -jar SpinDiamond.jar -spinfile rules -datafile data.n3 
+
+	usage: SpinDiamond.jar [parameters]
+		 -spinfile   <file>      Execute a SPIN Rules File on local data.
+		 -datafile   <file>      Input RDF Data File to execute query on.
+		 -tutorial               Quick tutorial.
+
+	Type 'help' for a list with all commands.
+
+	> help
+	Commands:
+		help : User guide.
+		exit : Terminate the program.
+		tq-size : Get the number of tokens in the TokenQueue.
+		tq-print : Print all tokens in the TokenQueue.
+		cs-size : Get the number of elements in the ConflictSet.
+		cs-print : Print all elements in the ConflictSet.
+		nt-print : Peek the next token in the TokenQueue.
+		nt-process : Propagate the next token through the Network.
+		nt-quick-process : Propagate k tokens at once.
+		nr-print : Peek the next rule-element in the ConflictSet.
+		nr-fire : Fire the next rule, obtaining result.
+		nr-quick-fire : Fire k rules at once.
+		run : Execute all to completion. Specify max number of steps.
+		result-set : Get the current ResultSet.
+
+
+	> tq-print
+	(PLUS, 1, [(http://example.com/0.1/person1, http://example.com/0.1/type, http://example.com/0.1/guest)])
+	(PLUS, 2, [(http://example.com/0.1/person1, http://example.com/0.1/name, "John")])
+	(PLUS, 3, [(http://example.com/0.1/person2, http://example.com/0.1/type, http://example.com/0.1/guest)])
+	(PLUS, 4, [(http://example.com/0.1/person2, http://example.com/0.1/name, "Kate")])
+	(PLUS, 5, [(http://example.com/0.1/var, http://example.com/0.1/value, 1.0)])
+
+	> nt-quick-process
+	Number steps: 5
+
+	> tq-size 
+	TokenQueue size: 0
+
+	> cs-size
+	ConflictSet size: 4
+
+	> cs-print
+	SpinConstruct[0]: (PLUS, 25, [(?p1=http://example.com/0.1/person1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/guest=http://example.com/0.1/guest), (?p1=http://example.com/0.1/person1, http://example.com/0.1/name=http://example.com/0.1/name, ?n1="John")], {})
+	SpinModify[1]: (PLUS, 26, [(?p1=http://example.com/0.1/person1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/guest=http://example.com/0.1/guest), (?p1=http://example.com/0.1/person1, http://example.com/0.1/name=http://example.com/0.1/name, ?n1="John")], {})
+	SpinConstruct[0]: (PLUS, 46, [(?p1=http://example.com/0.1/person2, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/guest=http://example.com/0.1/guest), (?p1=http://example.com/0.1/person2, http://example.com/0.1/name=http://example.com/0.1/name, ?n1="Kate")], {})
+	SpinModify[2]: (PLUS, 55, [(http://example.com/0.1/var=http://example.com/0.1/var, http://example.com/0.1/value=http://example.com/0.1/value, ?x=1.0)], {?y=2.0})
+
+	> nr-fire  
+
+	Fire SpinConstruct[0] for: (PLUS, 25, [(?p1=http://example.com/0.1/person1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/guest=http://example.com/0.1/guest), (?p1=http://example.com/0.1/person1, http://example.com/0.1/name=http://example.com/0.1/name, ?n1="John")], {})
+	New Token: (PLUS, 56, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/seating=http://example.com/0.1/seating)], {})
+	New Token: (PLUS, 57, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/seat1=http://example.com/0.1/seat1, ?n1="John")], {})
+
+	> result-set
+	ResultSet:
+	(http://example.com/0.1/var, http://example.com/0.1/value, 1.0)
+	(http://example.com/0.1/s1, http://example.com/0.1/type, http://example.com/0.1/seating)
+	(http://example.com/0.1/person1, http://example.com/0.1/name, "John")
+	(http://example.com/0.1/s1, http://example.com/0.1/seat1, "John")
+	(http://example.com/0.1/person1, http://example.com/0.1/type, http://example.com/0.1/guest)
+	(http://example.com/0.1/person2, http://example.com/0.1/type, http://example.com/0.1/guest)
+	(http://example.com/0.1/person2, http://example.com/0.1/name, "Kate")
+
+	> tq-print
+	(PLUS, 56, [(http://example.com/0.1/s1, http://example.com/0.1/type, http://example.com/0.1/seating)])
+	(PLUS, 57, [(http://example.com/0.1/s1, http://example.com/0.1/seat1, "John")])
+
+	> nr-print     
+	SpinModify[1]: (PLUS, 26, [(?p1=http://example.com/0.1/person1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/guest=http://example.com/0.1/guest), (?p1=http://example.com/0.1/person1, http://example.com/0.1/name=http://example.com/0.1/name, ?n1="John")], {})
+
+	> nr-fire
+
+	Fire SpinModify[1] for: (PLUS, 26, [(?p1=http://example.com/0.1/person1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/guest=http://example.com/0.1/guest), (?p1=http://example.com/0.1/person1, http://example.com/0.1/name=http://example.com/0.1/name, ?n1="John")], {})
+	New Token: (MINUS, 58, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/seating=http://example.com/0.1/seating)], {})
+	New Token: (MINUS, 59, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/seat1=http://example.com/0.1/seat1, ?n1="John")], {})
+
+	> result-set
+	ResultSet:
+	(http://example.com/0.1/var, http://example.com/0.1/value, 1.0)
+	(http://example.com/0.1/person1, http://example.com/0.1/name, "John")
+	(http://example.com/0.1/person1, http://example.com/0.1/type, http://example.com/0.1/guest)
+	(http://example.com/0.1/person2, http://example.com/0.1/type, http://example.com/0.1/guest)
+	(http://example.com/0.1/person2, http://example.com/0.1/name, "Kate")
+
+	> tq-print
+	(PLUS, 56, [(http://example.com/0.1/s1, http://example.com/0.1/type, http://example.com/0.1/seating)])
+	(PLUS, 57, [(http://example.com/0.1/s1, http://example.com/0.1/seat1, "John")])
+	(MINUS, 58, [(http://example.com/0.1/s1, http://example.com/0.1/type, http://example.com/0.1/seating)])
+	(MINUS, 59, [(http://example.com/0.1/s1, http://example.com/0.1/seat1, "John")])
+
+	> run
+	Max Number Rule-fires: 1000000
+
+	Fire SpinConstruct[0] for: (PLUS, 46, [(?p1=http://example.com/0.1/person2, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/guest=http://example.com/0.1/guest), (?p1=http://example.com/0.1/person2, http://example.com/0.1/name=http://example.com/0.1/name, ?n1="Kate")], {})
+	New Token: (PLUS, 66, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/type=http://example.com/0.1/type, http://example.com/0.1/seating=http://example.com/0.1/seating)], {})
+	New Token: (PLUS, 67, [(http://example.com/0.1/s1=http://example.com/0.1/s1, http://example.com/0.1/seat1=http://example.com/0.1/seat1, ?n1="Kate")], {})
+
+	Fire SpinModify[2] for: (PLUS, 55, [(http://example.com/0.1/var=http://example.com/0.1/var, http://example.com/0.1/value=http://example.com/0.1/value, ?x=1.0)], {?y=2.0})
+	New Token: (PLUS, 68, [(http://example.com/0.1/var=http://example.com/0.1/var, http://example.com/0.1/value2=http://example.com/0.1/value2, ?y=2.0)], {})
+	New Token: (MINUS, 69, [(http://example.com/0.1/var=http://example.com/0.1/var, http://example.com/0.1/value=http://example.com/0.1/value, ?x=1.0)], {})
+
+	> tq-size
+	TokenQueue size: 0
+
+	> cs-size
+	ConflictSet size: 0
+
+	> result-set
+	ResultSet:
+	(http://example.com/0.1/s1, http://example.com/0.1/type, http://example.com/0.1/seating)
+	(http://example.com/0.1/person1, http://example.com/0.1/name, "John")
+	(http://example.com/0.1/person1, http://example.com/0.1/type, http://example.com/0.1/guest)
+	(http://example.com/0.1/s1, http://example.com/0.1/seat1, "Kate")
+	(http://example.com/0.1/person2, http://example.com/0.1/type, http://example.com/0.1/guest)
+	(http://example.com/0.1/var, http://example.com/0.1/value2, 2.0)
+	(http://example.com/0.1/person2, http://example.com/0.1/name, "Kate")
+
+	> exit
+

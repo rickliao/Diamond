@@ -1,0 +1,744 @@
+/**
+ * JavaCC file
+ * Author: Rodolfo Kaplan Depena (UT-Austin)
+ * SPARQL Grammer as defined in http://www.w3.org/TR/rdf-sparql-query/#grammar
+ * Author's Notes: According to http://en.wikipedia.org/wiki/JavaCC 
+ * 				  the JavaCC "generates a top-down parser which limits
+ * 				  it to LL(k) ... grammers." Lucikly, SPARQL is 
+ *				  defined as an LL(1) according to the SPARQL url listed above.	  
+ */
+
+options
+{
+  STATIC = false;
+}
+PARSER_BEGIN(Parser)
+package diamond.parser;
+
+public class Parser
+{
+  public static void main(String[] args) throws ParseException
+  {
+    Parser parser = new Parser(System.in);
+    parser.Query();
+  }
+}
+PARSER_END(Parser)
+
+/** Escape Sequences as defined in http://www.w3.org/TR/rdf-sparql-query/#grammarEscapes */
+SKIP :
+{
+  "\t" | "\n" | "\r" | "\b" | "\f" | "\"" | "\'" | "\\" | " "
+}
+
+/** Keywords as defined in http://www.w3.org/TR/rdf-sparql-query/#sparqlGrammar */
+TOKEN [IGNORE_CASE]:
+{
+  < BASE: "base" >
+| < PREFIX: "prefix" >
+| < SELECT: "select" >
+| < CONSTRUCT: "construct" >
+| < DESCRIBE: "describe" >
+| < ASK: "ask" >
+| < ORDER: "order" >
+| < BY: "by" >
+| < LIMIT: "limit" >
+| < OFFSET: "offset" >
+| < DISTINCT: "distinct" >
+| < REDUCED: "reduced" >
+| < FROM: "from" >
+| < NAMED: "named" >
+| < WHERE: "where" >
+| < GRAPH: "graph" >
+| < OPTIONAL: "optional" >
+| < UNION: "union" >
+| < FILTER: "filter" >
+| < STR: "str" >
+| < LANG: "lang" >
+| < LANGMATCHES: "langmatches" >
+| < DATATYPE: "datatype" >
+| < BOUND: "bound" >
+| < SAME_TERM: "sameTERM"> //added this myself, didn't see the token defined in sparql grammer website
+| < ASC: "asc"> //added this myself, didn't see the token defined in sparql grammer website
+| < DESC: "desc"> //added this myself, didn't see the token defined in sparql grammer website
+| < IS_URI: "isURI" >
+| < IS_IRI: "isIRI" >
+| < IS_BLANK: "isBLANK" >
+| < IS_LITERAL: "isLITERAL" >
+| < REGEX: "regex" >
+| < TRUE: "true" >
+| < FALSE: "false" >
+| < INSERT : "insert" >
+| < DELETE : "delete" >
+| < BIND : "bind" > //SparqlSpin
+| < AS : "as" > //SparqlSpin
+}
+TOKEN :
+{
+  < TYPE_A: "a" >
+}
+
+/** Comments are special tokens that will not participate in parsing. Hence they are a special token.
+ *  Comments in SPARQL are defined as http://www.w3.org/TR/rdf-sparql-query/#grammarComments
+ */
+SPECIAL_TOKEN :
+{
+  < COMMENT: "#" (~["\r", "\n"])* ("\r" | "\n" | ["\r", "\n"])? >
+}
+
+/** Productions for terminals as defined by http://www.w3.org/TR/rdf-sparql-query/#sparqlGrammar */
+TOKEN :
+{  
+< IRI_REF: "<" (~["^", "<", ">", "\"", "{", "}", "|", "^", "`", "\\", "\u0000"-"\u0020"])* ">" > //Rule [70]
+| < PNAME_NS: (< PN_PREFIX >)? ":" > //Rule [71]
+| < PNAME_LN: < PNAME_NS > < PN_LOCAL > > //Rule [72]
+| < BLANK_NODE_LABEL: "_:" < PN_LOCAL > > //Rule [73]
+| < VAR1: "?" < VARNAME > > //Rule [74]
+| < VAR2: "$" < VARNAME > > //Rule [75]
+| < LANGTAG: "@" (["a"-"z", "A"-"Z"])+ ("-" (["a"-"z", "A"-"Z", "0"-"9"])+ )* > //Rule [76]
+| < INTEGER: (["0"-"9"])+ > //Rule [77]
+| < DECIMAL: (["0"-"9"])+ "." (["0"-"9"])* | "." (["0"-"9"])+ > //Rule [78]
+| < DOUBLE: (["0"-"9"])+ "." (["0"-"9"])* < EXPONENT > | "." (["0"-"9"])+ < EXPONENT > | (["0"-"9"])+ < EXPONENT > > //Rule [79]
+| < INTEGER_POSITIVE: "+" < INTEGER > > //Rule [80]
+| < DECIMAL_POSITIVE: "+" < DECIMAL > > //Rule [81]
+| < DOUBLE_POSITIVE: "+" < DOUBLE > > //Rule [82]
+| < INTEGER_NEGATIVE: "-" < INTEGER > > //Rule [83]
+| < DECIMAL_NEGATIVE: "-" < DECIMAL > > //Rule [84]
+| < DOUBLE_NEGATIVE: "-" < DOUBLE > > //Rule [85]
+| < EXPONENT: ["e", "E"] (["+", "-"])? (["0"-"9"])+ > //Rule [86]
+| < STRING_LITERAL1: "'" ( (~["'","\\","\n","\r"]) | <ECHAR> )* "'" > //Rule [87]
+| < STRING_LITERAL2: "\"" ( (~["\"","\\","\n","\r"]) | <ECHAR> )* "\"" > //Rule [88]
+| < STRING_LITERAL_LONG1: "\'\'\'" (("\'" | "\'\'")? (["^", "\'", "\\"] | < ECHAR >))* "\'\'\'" > //Rule [89]
+| < STRING_LITERAL_LONG2: "\"\"\"" (("\"" | "\"\"")? (["^", "\"", "\\"] | < ECHAR >))* "\"\"\"" > //Rule [90]
+| < ECHAR: "\\" ["t", "b", "n", "r", "f", "\\", "\"", "\'"] > //Rule [91]
+| < NIL: "(" (< WS >)+ ")" > //Rule [92]
+| < WS: "\u0020" | "\u0009" | "\r" | "\n" > //Rule [93]
+| < ANON: "[" (< WS >)* "]" > //Rule [94]
+| < PN_CHARS_BASE: ["A"-"Z"] | ["a"-"z"] | ["\u00C0"-"\u00D6"] | ["\u00D8"-"\u00F6"] | ["\u00F8"-"\u02FF"] |
+				   ["\u0370"-"\u037D"] | ["\u037F"-"\u1FFF"] | ["\u200C"-"\u200D"] | ["\u2070"-"\u218F"] |
+				   ["\u2C00"-"\u2FEF"] | ["\u3001"-"\uD7FF"] | ["\uF900"-"\uFDCF"] | ["\uFDF0"-"\uFFFD"] >
+				   // won't compile with this extra extension ["\u10000"-"\uEFFFF"]
+| < PN_CHARS_U: < PN_CHARS_BASE > | "_" > //Rule [96]
+| < #VARNAME: (< PN_CHARS_U > | ["0"-"9"]) (< PN_CHARS_U > | ["0"-"9"] | "\u00B7" | ["\u0300"-"\u036F"] | ["\u203F"-"\u2040"])* > //Rule [97]
+| < PN_CHARS: < PN_CHARS_U > | "-" | ["0"-"9"] | "\u00B7" | ["\u0300"-"\u036F"] | ["\u203F"-"\u2040"] > //Rule [98]
+| < PN_PREFIX: < PN_CHARS_BASE > ((< PN_CHARS > | ".")* < PN_CHARS >)? > //Rule [99]
+| < PN_LOCAL: (< PN_CHARS_U > | ["0"-"9"]) ((< PN_CHARS > | ".")* < PN_CHARS >)? > //Rule [100]
+| < PUTATIVE_LITERAL: (["a"-"z","A"-"Z","0"-"9"])+ (("_")? (["a"-"z","A"-"Z","0"-"9"])+ )*> //Rule [0]
+}
+
+/** Rules below based on tokens above */
+
+/** Query as defined by http://www.w3.org/TR/rdf-sparql-query/#rQuery */
+void Query() : //Rule [1]
+{}
+{
+  Prologue()
+  (SelectQuery() | ConstructQuery() | DescribeQuery() | AskQuery())
+}
+
+/** Prologue as defined by http://www.w3.org/TR/rdf-sparql-query/#rPrologue */
+void Prologue() : //Rule [2]
+{}
+{
+  (BaseDecl())? (PrefixDecl())*
+}
+
+/** BaseDecl as defined by http://www.w3.org/TR/rdf-sparql-query/#rBaseDecl */
+void BaseDecl() : //Rule [3]
+{}
+{
+  < BASE > < IRI_REF >
+}
+
+/** PrefixDecl as defined by http://www.w3.org/TR/rdf-sparql-query/#rPrefixDecl */
+void PrefixDecl() : //Rule [4]
+{}
+{
+  < PREFIX > < PNAME_NS > < IRI_REF >
+}
+
+/** SelectQuery() as defined by http://www.w3.org/TR/rdf-sparql-query/#rSelectQuery */
+void SelectQuery() : //Rule [5]
+{}
+{
+  < SELECT > (< DISTINCT > | < REDUCED >)? ((Var())+ | "*")
+  (DatasetClause())*
+  WhereClause()
+  SolutionModifier()
+}
+
+/** ConstructQuery as defined by http://www.w3.org/TR/rdf-sparql-query/#rConstructQuery */
+void ConstructQuery() : //Rule [6]
+{}
+{
+  < CONSTRUCT > ConstructTemplate() (DatasetClause())* WhereClause() SolutionModifier()
+}
+
+/** DescribeQuery as defined by http://www.w3.org/TR/rdf-sparql-query/#rDescribeQuery */
+void DescribeQuery() : //Rule [7]
+{}
+{
+    < DESCRIBE > ((VarOrIRIref())+ | "*") (DatasetClause())*
+    (WhereClause())? SolutionModifier()
+}
+
+/** AskQuery as defined by http://www.w3.org/TR/rdf-sparql-query/#rAskQuery */
+void AskQuery() : //Rule [8]
+{}
+{
+  < ASK > (DatasetClause())* WhereClause()
+}
+
+/** DatasetClause as defined by http://www.w3.org/TR/rdf-sparql-query/#rDatasetClause */
+void DatasetClause() : //Rule [9]
+{}
+{
+  < FROM > (DefaultGraphClause() | NamedGraphClause())
+}
+
+/** DefaultGraphClause as defined by http://www.w3.org/TR/rdf-sparql-query/#rDefaultGraphClause */
+void DefaultGraphClause() : //Rule [10]
+{}
+{
+  SourceSelector()
+}
+
+/** NamedGraphClause as defined by http://www.w3.org/TR/rdf-sparql-query/#rNamedGraphClause */
+void NamedGraphClause() : //Rule [11]
+{}
+{
+  < NAMED > SourceSelector()
+}
+
+/** SourceSelector as defined by http://www.w3.org/TR/rdf-sparql-query/#rSourceSelector */
+void SourceSelector() : //Rule [12]
+{}
+{
+  IRIref()
+}
+
+/** WhereClause as defined by http://www.w3.org/TR/rdf-sparql-query/#rWhereClause */
+void WhereClause() : //Rule [13]
+{}
+{
+  (< WHERE >)? GroupGraphPattern()
+}
+
+/** SolutionModifier as defined by http://www.w3.org/TR/rdf-sparql-query/#rSolutionModifier */
+void SolutionModifier() : //Rule [14]
+{}
+{
+  (OrderClause())? (LimitOffsetClauses())?
+}
+
+/** LimitOffsetClauses as defined by http://www.w3.org/TR/rdf-sparql-query/#rLimitOffsetClauses */
+void LimitOffsetClauses() : //Rule [15]
+{}
+{
+  (LimitClause() (OffsetClause())? | OffsetClause() (LimitClause())?)
+}
+
+/** OrderClause as defined by http://www.w3.org/TR/rdf-sparql-query/#rOrderClause */
+void OrderClause() : //Rule [16]
+{}
+{
+  < ORDER > < BY > (OrderCondition())+
+}
+
+/** OrderCondition as defined by http://www.w3.org/TR/rdf-sparql-query/#rOrderCondition */
+void OrderCondition() : //Rule [17]
+{}
+{
+  ((< ASC > | < DESC >) BrackettedExpression()) | (Constraint() | Var())
+}
+
+/** LimitClause as defined by http://www.w3.org/TR/rdf-sparql-query/#rLimitClause */
+void LimitClause() : //Rule [18]
+{}
+{
+  < LIMIT > < INTEGER >
+}
+
+/** OffsetClause as defined by http://www.w3.org/TR/rdf-sparql-query/#rOffsetClause */
+void OffsetClause() : //Rule [19]
+{}
+{
+  < OFFSET > < INTEGER >
+}
+
+/** GroupGraphPattern as defined by http://www.w3.org/TR/rdf-sparql-query/#rGroupGraphPattern */
+void GroupGraphPattern() : //Rule [20] without FILTER
+{}
+{
+  "{" (TriplesBlock())? (GraphPatternNotTriples() (".")? (TriplesBlock())?)* "}"
+}
+
+/** TriplesBlock as defined by http://www.w3.org/TR/rdf-sparql-query/#rTriplesBlock */
+void TriplesBlock() : //Rule [21]
+{}
+{
+  TriplesSameSubject() ("." (TriplesBlock())? )?
+}
+
+/** GraphPatternNotTriples as defined by http://www.w3.org/TR/rdf-sparql-query/#rGraphPatternNotTriples */
+void GraphPatternNotTriples() : //Rule [22] with BIND and FILTER
+{}
+{
+  OptionalGraphPattern() | GroupOrUnionGraphPattern() | GraphGraphPattern() | Filter() | Bind()
+}
+
+/** OptionalGraphPattern as defined by http://www.w3.org/TR/rdf-sparql-query/#rOptionalGraphPattern */
+void OptionalGraphPattern() : //Rule[23]
+{}
+{
+  < OPTIONAL > GroupGraphPattern()
+}
+
+/** GraphGraphPattern as defined by http://www.w3.org/TR/rdf-sparql-query/#rGraphGraphPattern */
+void GraphGraphPattern() : //Rule[24]
+{}
+{
+  < GRAPH > VarOrIRIref() GroupGraphPattern()
+}
+
+/** GroupOrUnionGraphPattern as defined by http://www.w3.org/TR/rdf-sparql-query/#rGroupOrUnionGraphPattern */
+void GroupOrUnionGraphPattern() : //Rule [25]
+{}
+{
+  GroupGraphPattern() (< UNION > GroupGraphPattern())*
+}
+
+/** Filter as defined by http://www.w3.org/TR/rdf-sparql-query/#rFilter */
+void Filter() : //Rule [26]
+{}
+{
+  < FILTER > Constraint()
+}
+
+/** Constraint as defined by http://www.w3.org/TR/rdf-sparql-query/#rConstraint */
+void Constraint() : //Rule [27]
+{}
+{
+  BrackettedExpression() | BuiltInCall() | FunctionCall()
+}
+
+/** FunctionCall as defined by http://www.w3.org/TR/rdf-sparql-query/#rFunctionCall */
+void FunctionCall() : //Rule [28]
+{}
+{
+  IRIref() ArgList()
+}
+
+/** ArgList as defined by http://www.w3.org/TR/rdf-sparql-query/#rArgList */
+void ArgList() : //Rule [29]
+{}
+{
+  (< NIL > | "(" Expression() ("," Expression())* ")")
+}
+
+/** ConstructTemplate as defined by http://www.w3.org/TR/rdf-sparql-query/#rConstructTemplate */
+void ConstructTemplate() : //Rule [30]
+{}
+{
+  "{" (ConstructTriples())? "}"
+}
+
+/** ConstructTriples as defined by http://www.w3.org/TR/rdf-sparql-query/#rConstructTriples */
+void ConstructTriples() : //Rule [31]
+{}
+{
+  TriplesSameSubject() ("." (ConstructTriples())? )?
+}
+
+/** TriplesSameSubject as defined by http://www.w3.org/TR/rdf-sparql-query/#rTriplesSameSubject */
+void TriplesSameSubject() : //Rule [32]
+{}
+{
+  VarOrTerm() PropertyListNotEmpty() | TriplesNode() PropertyList()
+}
+
+/** PropertyListNotEmpty as defined by http://www.w3.org/TR/rdf-sparql-query/#rPropertyListNotEmpty */
+void PropertyListNotEmpty() : //Rule [33]
+{}
+{
+  Verb() ObjectList() (";" (Verb() ObjectList())? )*
+}
+
+void PropertyList() : //Rule [34]
+{}
+{
+  (PropertyListNotEmpty())?
+}
+
+/** ObjectList as defined by http://www.w3.org/TR/rdf-sparql-query/#rObjectList */
+void ObjectList() : //Rule [35]
+{}
+{
+  SparqlObject() ("," SparqlObject())*
+}
+
+/** Object as defined by http://www.w3.org/TR/rdf-sparql-query/#rObject */
+void SparqlObject() : //Rule [36]
+{}
+{
+  GraphNode()
+}
+
+/** Verb as defined by http://www.w3.org/TR/rdf-sparql-query/#rVerb */
+void Verb() : //Rule [37]
+{}
+{
+  VarOrIRIref() | < TYPE_A > | PutativeLiteral() 
+}
+
+/** TriplesNode as defined by http://www.w3.org/TR/rdf-sparql-query/#rTriplesNode */
+void TriplesNode() : //Rule [38]
+{}
+{
+  SparqlCollection() | BlankNodePropertyList()
+}
+
+/** BlankNodePropertyList as defined by http://www.w3.org/TR/rdf-sparql-query/#rBlankNodePropertyList */
+void BlankNodePropertyList() : //Rule [39]
+{}
+{
+  "[" PropertyListNotEmpty() "]"
+}
+
+/** Collection as defined by http://www.w3.org/TR/rdf-sparql-query/#rCollection */
+void SparqlCollection() : //Rule [40]
+{}
+{
+  "(" (GraphNode())+ ")"
+}
+
+/** GraphNode as defined by http://www.w3.org/TR/rdf-sparql-query/#rGraphNode */
+void GraphNode() : //Rule [41]
+{}
+{
+  VarOrTerm() | TriplesNode()
+}
+
+/** VarOrTerm as defined by http://www.w3.org/TR/rdf-sparql-query/#rVarOrTerm */
+void VarOrTerm() : //Rule [42]
+{}
+{
+  Var() | GraphTerm()
+} 
+
+/** VarOrIRIref as defined by http://www.w3.org/TR/rdf-sparql-query/#rVarOrIRIref */
+void VarOrIRIref() : //Rule [43]
+{}
+{
+  Var() | IRIref()
+}
+
+/** Var as defined by http://www.w3.org/TR/rdf-sparql-query/#rVar */
+void Var() : //Rule [44]
+{}
+{
+  < VAR1 > | < VAR2 >
+}
+
+/** GraphTerm as defined by http://www.w3.org/TR/rdf-sparql-query/#rGraphTerm */
+void GraphTerm() : //Rule [45]
+{}
+{
+  IRIref() | RDFLiteral() | NumericLiteral() | BooleanLiteral() | BlankNode() | PutativeLiteral() | < NIL >
+}
+
+/** Expression as defined by http://www.w3.org/TR/rdf-sparql-query/#rExpression */
+void Expression() : //Rule [46]
+{}
+{
+  ConditionalOrExpression()
+}
+
+/** ConditionalOrExpression as defined by http://www.w3.org/TR/rdf-sparql-query/#rConditionalOrExpression */
+void ConditionalOrExpression() : //Rule [47]
+{}
+{
+  ConditionalAndExpression() ("||" ConditionalAndExpression())*
+}
+
+/** ConditionalAndExpression as defined by http://www.w3.org/TR/rdf-sparql-query/#rConditionalAndExpression */
+void ConditionalAndExpression() : //Rule [48]
+{}
+{
+  ValueLogical() ( "&&" ValueLogical() )*
+}
+
+/** ValueLogical as defined by http://www.w3.org/TR/rdf-sparql-query/#rValueLogical */
+void ValueLogical() : //Rule [49]
+{}
+{
+  RelationalExpression()
+}
+
+/** RelationalExpression as defined by http://www.w3.org/TR/rdf-sparql-query/#rRelationalExpression */
+void RelationalExpression() : //Rule [50]
+{}
+{
+  NumericExpression() ( "=" NumericExpression() | "!=" NumericExpression() | "<" NumericExpression() | ">" NumericExpression() |
+  "<=" NumericExpression() | ">=" NumericExpression() )?
+}
+
+/** NumericExpression as defined by http://www.w3.org/TR/rdf-sparql-query/#rNumericExpression */
+void NumericExpression() : //Rule [51]
+{}
+{
+  AdditiveExpression()
+}
+
+/** AdditiveExpression as defined by http://www.w3.org/TR/rdf-sparql-query/#rAdditiveExpression */
+void AdditiveExpression() : //Rule [52]
+{}
+{
+  MultiplicativeExpression() ( "+" MultiplicativeExpression() | "-" MultiplicativeExpression() | NumericLiteralPositive() | NumericLiteralNegative() )*
+}
+
+/** MultiplicativeExpression as defined by http://www.w3.org/TR/rdf-sparql-query/#rMultiplicativeExpression */
+void MultiplicativeExpression() : //Rule [53]
+{}
+{
+  UnaryExpression() ( "*" UnaryExpression() | "/" UnaryExpression() )*
+}
+
+/** UnaryExpression as defined by http://www.w3.org/TR/rdf-sparql-query/#rUnaryExpression */
+void UnaryExpression() : //Rule [54]
+{}
+{
+  ("!" PrimaryExpression() | "+" PrimaryExpression() | "-" PrimaryExpression() | PrimaryExpression())
+}
+
+/** PrimaryExpression as defined by http://www.w3.org/TR/rdf-sparql-query/#rPrimaryExpression */
+void PrimaryExpression() : //Rule [55]
+{}
+{
+  BrackettedExpression() | BuiltInCall() | IRIrefOrFunction() | RDFLiteral() | NumericLiteral() | BooleanLiteral() | Var()
+}
+
+/** BrackettedExpression as defined by http://www.w3.org/TR/rdf-sparql-query/#rBrackettedExpression */
+void BrackettedExpression() : //Rule [56]
+{}
+{
+  "(" Expression() ")"
+}
+
+/** BuiltInCall as defined by http://www.w3.org/TR/rdf-sparql-query/#rBuiltInCall */
+void BuiltInCall() : //Rule [57]
+{}
+{
+  (
+    < STR > "(" Expression() ")" 
+| 	< LANG > "(" Expression() ")" 
+|	  < LANGMATCHES > "(" Expression() "," Expression() ")" 
+|	  < DATATYPE > "(" Expression() ")"
+|	  < BOUND > "(" Var() ")" 
+|	  < SAME_TERM > "(" Expression() "," Expression() ")" 
+|	  < IS_IRI > "(" Expression() ")" 
+|	  < IS_URI > "(" Expression() ")" 
+|	  < IS_BLANK > "(" Expression() ")" 
+|	  < IS_LITERAL > "(" Expression() ")" 
+|	RegexExpression()
+  )
+}
+
+/** RegexExpression as defined by http://www.w3.org/TR/rdf-sparql-query/#rRegexExpression */
+void RegexExpression() : //Rule [58]
+{}
+{
+  < REGEX > "(" Expression() "," Expression() ( "," Expression() )? ")"
+}
+
+/** IRIrefOrFunction as defined by http://www.w3.org/TR/rdf-sparql-query/#rIRIrefOrFunction */
+void IRIrefOrFunction() : //Rule [59]
+{}
+{
+  IRIref() (ArgList())?
+}
+
+/** RDFLiteral as defined by http://www.w3.org/TR/rdf-sparql-query/#rRDFLiteral */
+void RDFLiteral() : //Rule [60]
+{}
+{
+  SparqlString() ( < LANGTAG > | ( "^^" IRIref() ) )?
+}
+
+/** NumericLiteral as defined by http://www.w3.org/TR/rdf-sparql-query/#rNumericLiteral */
+void NumericLiteral() : //Rule [61]
+{}
+{
+  (NumericLiteralUnsigned() | NumericLiteralPositive() | NumericLiteralNegative())
+}
+
+/** NumericLiteralUnsigned as defined http://www.w3.org/TR/rdf-sparql-query/#rNumericLiteralUnsigned */
+void NumericLiteralUnsigned() : //Rule [62]
+{}
+{
+  < INTEGER > | < DECIMAL > | < DOUBLE >
+}
+
+/** NumericLiteralPositive as defined by http://www.w3.org/TR/rdf-sparql-query/#rNumericLiteralPositive */
+void NumericLiteralPositive() : //Rule [63]
+{}
+{
+  < INTEGER_POSITIVE > | < DECIMAL_POSITIVE > | < DOUBLE_POSITIVE >
+}
+
+/** NumericLiteralNegative as defined by http://www.w3.org/TR/rdf-sparql-query/#rNumericLiteralNegative */
+void NumericLiteralNegative() : //Rule [64]
+{}
+{
+  < INTEGER_NEGATIVE > | < DECIMAL_NEGATIVE > |	< DOUBLE_NEGATIVE >
+}
+
+/** BooleanLiteral as defined by http://www.w3.org/TR/rdf-sparql-query/#rBooleanLiteral */
+void BooleanLiteral() : //Rule [65]
+{}
+{
+  < TRUE > | < FALSE >
+}
+
+/** String as defined by http://www.w3.org/TR/rdf-sparql-query/#rString */
+void SparqlString() : //Rule [66]
+{}
+{
+  < STRING_LITERAL1 > | < STRING_LITERAL2 > | < STRING_LITERAL_LONG1 > | < STRING_LITERAL_LONG2 >
+}
+
+/** IRIref as defined by http://www.w3.org/TR/rdf-sparql-query/#rIRIref */
+void IRIref() : //Rule [67]
+{}
+{
+  < IRI_REF > | PrefixedName()
+}
+
+/** PrefixedName as defined by http://www.w3.org/TR/rdf-sparql-query/#rPrefixedName */
+void PrefixedName() : //Rule [68]
+{}
+{
+  < PNAME_LN > | < PNAME_NS >
+}
+
+/** BlankNode as defined by http://www.w3.org/TR/rdf-sparql-query/#rBlankNode */
+void BlankNode() : //Rule [69]
+{}
+{
+  < BLANK_NODE_LABEL > | < ANON >
+}
+
+/** PutativeLiteral is an extension of the SPARQL grammer and this is defined by the author to process queries over putative ontologies
+ *  To learn about putative ontologies (see http://kcap09.stanford.edu/share/posterDemos/147/paper147.pdf)
+ */
+void PutativeLiteral() : //Rule [-1]
+{}
+{
+  < PUTATIVE_LITERAL >
+}
+
+/* SparqlSpin Rules */
+
+void SparqlSpin() : //SparqlSpin [0]
+{}
+{
+  Prologue() ("[" Rule() "]")+
+}
+
+void Rule() : //SparqlSpin [1]
+{}
+{ 
+  Consequent() <WHERE> Antecedent()
+}
+
+void Consequent() : //SparqlSpin [2]
+{}
+{
+  RuleConstructClause() | RuleModifyClause()
+}
+
+void RuleConstructClause() : //SparqlSpin [3]
+{}
+{
+  < CONSTRUCT > ConstructTemplate() (DatasetClause())*
+}
+
+void RuleModifyClause() : // SparqlSpin [4]
+{}
+{
+  < DELETE > DeleteClause() (< INSERT > InsertClause())?
+}
+
+void DeleteClause() : //SparqlSpin [5]
+{}
+{
+ "{" (DeleteTriples())? "}"
+}
+
+void DeleteTriples() : //SparqlSpin [6]
+{}
+{
+ TriplesSameSubject() ("." (DeleteTriples())? )?
+}
+
+void InsertClause() : // SparqlSpin [7]
+{}
+{
+ "{" (InsertTriples())? "}"
+}
+
+void InsertTriples() : // SparqlSpin [8]
+{}
+{
+ TriplesSameSubject() ("." (InsertTriples())? )?
+}
+
+void Antecedent() : // SparqlSpin [9]
+{}
+{
+  WhereClause() SolutionModifier()
+}
+
+/** Bind as defined by http://www.w3.org/TR/sparql11-query/#rBind */
+void Bind() : // SparqlSpin [10]
+{}
+{
+  <BIND> "(" Expression() <AS> Var() ")"
+}
+
+/*
+Copyright (c) 2010, Rodolfo Kaplan Depena
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+1. Redistributions and use of source code, binary forms, and documentation are 
+   for personal and educational use only.
+2. Redistributions and use of source code, binary forms, and documentation  
+   must not be used for monetary gain and/or for business purposes (PROFIT AND NON-PROFIT) 
+   of any sort without the express written permission of Rodolfo Kaplan Depena.
+3. Redistributions of source code must retain the above copyright
+   notice, this list of conditions and the following disclaimer.
+4. Redistributions in binary form must reproduce the above copyright
+   notice, this list of conditions and the following disclaimer in the
+   documentation and/or other materials provided with the distribution.
+5. All advertising materials mentioning features or use of this software
+   must display the following acknowledgement:
+   This product includes software developed by Rodolfo Kaplan Depena.
+   Any use of this software for monetary gain (or business purposes) of any sort
+   without the express written consent of Rodolfo Kaplan Depena is not allowed.
+6. Neither the name of the Rodolfo Kaplan Depena nor the
+   names of its contributors may be used to endorse or promote products
+   derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY RODOLFO KAPLAN DEPENA (AND CONTRIBUTORS) ''AS IS'' AND ANY
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL RODOLFO KAPLAN DEPENA (AND CONTRIBUTORS) BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/

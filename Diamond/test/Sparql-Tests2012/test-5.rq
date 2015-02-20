@@ -1,0 +1,9 @@
+#Q5: Implicit Inner Join 
+SELECT ?author
+WHERE {
+  ?x <http://www.example.org/type> <http://www.example.org/Book>;
+     <http://www.example.org/author> ?author.
+  ?y <http://www.example.org/type> <http://www.example.org/Article>;
+     <http://www.example.org/author> ?author2.
+  FILTER (?author = ?author2)
+}
