@@ -1,5 +1,7 @@
 package diamond.managers;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.HashSet;
@@ -13,49 +15,49 @@ import java.util.Set;
  */
 public class URLManager {
 
-    private final Set<URL> urlsNotDereferencedYet;
-    private final Set<URL> urlsSuccessfullyDereferenced;
-    private final Set<URL> urlsUnsuccessfullyDereferenced;
+    private final Set<URI> urlsNotDereferencedYet;
+    private final Set<URI> urlsSuccessfullyDereferenced;
+    private final Set<URI> urlsUnsuccessfullyDereferenced;
 
     public URLManager() {
-        this.urlsNotDereferencedYet = new HashSet<URL>();
-        this.urlsSuccessfullyDereferenced = new HashSet<URL>();
-        this.urlsUnsuccessfullyDereferenced = new HashSet<URL>();
+        this.urlsNotDereferencedYet = new HashSet<URI>();
+        this.urlsSuccessfullyDereferenced = new HashSet<URI>();
+        this.urlsUnsuccessfullyDereferenced = new HashSet<URI>();
     }
 
-    public Set<URL> getURLsNotDereferencedYet() { return urlsNotDereferencedYet; }
-    public Set<URL> getURLsSuccessfullyDereferenced() { return urlsSuccessfullyDereferenced; }
-    public Set<URL> getURLsUnsuccessfullyDereferenced() { return urlsUnsuccessfullyDereferenced; }
+    public Set<URI> getURLsNotDereferencedYet() { return urlsNotDereferencedYet; }
+    public Set<URI> getURLsSuccessfullyDereferenced() { return urlsSuccessfullyDereferenced; }
+    public Set<URI> getURLsUnsuccessfullyDereferenced() { return urlsUnsuccessfullyDereferenced; }
     
     /**
      * Add URL if it wasn't present before.
      */
-    public boolean add(URL url) {
+    public boolean add(URI uri) {
         boolean success = false;
-        if(!urlsNotDereferencedYet.contains(url) && !urlsSuccessfullyDereferenced.contains(url)
-                && !urlsUnsuccessfullyDereferenced.contains(url)) {
-            urlsNotDereferencedYet.add(url);
+        if(!urlsNotDereferencedYet.contains(uri) && !urlsSuccessfullyDereferenced.contains(uri)
+                && !urlsUnsuccessfullyDereferenced.contains(uri)) {
+            urlsNotDereferencedYet.add(uri);
             success = true;
         }
         return success;
     }
     
-    public void add(Collection<URL> urls) {
-        for(URL url : urls) add(url);
+    public void add(Collection<URL> urls) throws URISyntaxException {
+        for(URL url : urls) add(url.toURI());
     }
 
     /**
      * Return a URL for dereferencing
      */
-    public URL getURLForDereferencing() {
-        URL urlToReturn = null;
+    public URI getURLForDereferencing() {
+        URI uriToReturn = null;
         if(!urlsNotDereferencedYet.isEmpty()) {
-            urlToReturn = urlsNotDereferencedYet.iterator().next();
+            uriToReturn = urlsNotDereferencedYet.iterator().next();
         }
-        return urlToReturn;
+        return uriToReturn;
     }
     
-    public Set<URL> getAllURLsForDereferencing() {
+    public Set<URI> getAllURLsForDereferencing() {
         return urlsNotDereferencedYet;
     }
 
@@ -76,13 +78,13 @@ public class URLManager {
      * @param URLSuccessfullyDereferenced - boolean status on successful
      *            dereference (or not)
      */
-    public void updateStatusOfURLDereferenced(URL url, boolean URLSuccessfullyDereferenced) {
+    public void updateStatusOfURLDereferenced(URI uri, boolean URLSuccessfullyDereferenced) {
         if (URLSuccessfullyDereferenced) {
-            urlsSuccessfullyDereferenced.add(url);
+            urlsSuccessfullyDereferenced.add(uri);
         } else {
-            urlsUnsuccessfullyDereferenced.add(url);
+            urlsUnsuccessfullyDereferenced.add(uri);
         }
-        urlsNotDereferencedYet.remove(url);
+        urlsNotDereferencedYet.remove(uri);
     }
     
     @Override

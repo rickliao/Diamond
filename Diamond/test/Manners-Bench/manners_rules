@@ -1,0 +1,159 @@
+PREFIX ex: <http://www.example.org/>
+
+[DELETE {
+    ex:next_id ex:value ?nid .
+    ?_x1 ex:c ?c .
+    ex:context ex:value "start" .
+} INSERT {
+    ex:next_id ex:value ?nid2 .
+    ?_id0 ex:type ex:seating .
+    ?_id0 ex:seat1 1 .
+    ?_id0 ex:name1 ?n .
+    ?_id0 ex:name2 ?n .
+    ?_id0 ex:seat2 1 .
+    ?_id0 ex:id ?c .
+    ?_id0 ex:pid 0 .
+    ?_id0 ex:path_done "yes" .
+    ?_id1 ex:type ex:path .
+    ?_id1 ex:id ?c .
+    ?_id1 ex:name ?n .
+    ?_id1 ex:seat 1 .
+    ?_x1 ex:c ?_x2 .
+    ex:context ex:value "assign_seats" .
+} WHERE {
+    ex:next_id ex:value ?nid .
+    ex:context ex:value "start" .
+    ?_x0 ex:type ex:guest .
+    ?_x0 ex:name ?n .
+    ?_x1 ex:type ex:count .
+    ?_x1 ex:c ?c .
+    BIND(?c + 1 AS ?_x2) .
+    BIND(?nid + 2 AS ?nid2) .
+    BIND("id" + (?nid + 1) AS ?_id1) .
+    BIND("id" + (?nid + 0) AS ?_id0) .
+}]
+
+[DELETE {
+    ex:next_id ex:value ?nid .
+    ?_x3 ex:c ?c .
+    ex:context ex:value "assign_seats" .
+} INSERT {
+    ex:next_id ex:value ?nid2 .
+    ?_id0 ex:type ex:seating .
+    ?_id0 ex:seat1 ?seat2 .
+    ?_id0 ex:name1 ?n2 .
+    ?_id0 ex:name2 ?g2 .
+    ?_id0 ex:seat2 ?_x6 .
+    ?_id0 ex:id ?c .
+    ?_id0 ex:pid ?id .
+    ?_id0 ex:path_done "no" .
+    ?_id1 ex:type ex:path .
+    ?_id1 ex:id ?c .
+    ?_id1 ex:name ?g2 .
+    ?_id1 ex:seat ?_x7 .
+    ?_id2 ex:type ex:chosen .
+    ?_id2 ex:id ?id .
+    ?_id2 ex:name ?g2 .
+    ?_id2 ex:hobby ?h1 .
+    ?_x3 ex:c ?_x8 .
+    ex:context ex:value "make_path" .
+} WHERE {
+    ex:next_id ex:value ?nid .
+    ex:context ex:value "assign_seats" .
+    ?_x0 ex:type ex:seating .
+    ?_x0 ex:seat1 ?seat1 .
+    ?_x0 ex:seat2 ?seat2 .
+    ?_x0 ex:name2 ?n2 .
+    ?_x0 ex:id ?id .
+    ?_x0 ex:pid ?pid .
+    ?_x0 ex:path_done "yes" .
+    ?_x1 ex:type ex:guest .
+    ?_x1 ex:name ?n2 .
+    ?_x1 ex:sex ?s1 .
+    ?_x1 ex:hobby ?h1 .
+    ?_x2 ex:type ex:guest .
+    ?_x2 ex:name ?g2 .
+    ?_x2 ex:sex ?s2 .
+    ?_x2 ex:hobby ?h1 .
+    ?_x3 ex:type ex:count .
+    ?_x3 ex:c ?c .
+    FILTER(?s1 != ?s2) .
+    OPTIONAL {
+    ?_x5 ex:type ex:chosen .
+    ?_x5 ex:id ?id .
+    ?_x5 ex:name ?g2 .
+    ?_x5 ex:hobby ?h1 .
+    } FILTER(!BOUND(?_x5)) .
+    OPTIONAL {
+    ?_x4 ex:type ex:path .
+    ?_x4 ex:id ?id .
+    ?_x4 ex:name ?g2 .
+    } FILTER(!BOUND(?_x4)) .
+    BIND(?seat2 + 1 AS ?_x7) .
+    BIND(?seat2 + 1 AS ?_x6) .
+    BIND(?nid + 3 AS ?nid2) .
+    BIND(?c + 1 AS ?_x8) .
+    BIND("id" + (?nid + 1) AS ?_id1) .
+    BIND("id" + (?nid + 2) AS ?_id2) .
+    BIND("id" + (?nid + 0) AS ?_id0) .
+}]
+
+[DELETE {
+    ex:next_id ex:value ?nid .
+} INSERT {
+    ex:next_id ex:value ?nid2 .
+    ?_id0 ex:type ex:path .
+    ?_id0 ex:id ?id .
+    ?_id0 ex:name ?n1 .
+    ?_id0 ex:seat ?s .
+} WHERE {
+    ex:next_id ex:value ?nid .
+    ex:context ex:value "make_path" .
+    ?_x0 ex:type ex:seating .
+    ?_x0 ex:id ?id .
+    ?_x0 ex:pid ?pid .
+    ?_x0 ex:path_done "no" .
+    ?_x1 ex:type ex:path .
+    ?_x1 ex:id ?pid .
+    ?_x1 ex:name ?n1 .
+    ?_x1 ex:seat ?s .
+    OPTIONAL {
+    ?_x2 ex:type ex:path .
+    ?_x2 ex:id ?id .
+    ?_x2 ex:name ?n1 .
+    } FILTER(!BOUND(?_x2)) .
+    BIND(?nid + 1 AS ?nid2) .
+    BIND("id" + (?nid + 0) AS ?_id0) .
+}]
+
+[DELETE {
+    ?_x0 ex:path_done "no" .
+    ex:context ex:value "make_path" .
+} INSERT {
+    ?_x0 ex:path_done "yes" .
+    ex:context ex:value "check_done" .
+} WHERE {
+    ex:context ex:value "make_path" .
+    ?_x0 ex:type ex:seating .
+    ?_x0 ex:path_done "no" .
+}]
+
+[DELETE {
+    ex:context ex:value "check_done" .
+} INSERT {
+    ex:context ex:value "print_results" .
+} WHERE {
+    ex:context ex:value "check_done" .
+    ex:last_seat ex:value ?l_seat .
+    ?_x0 ex:type ex:seating .
+    ?_x0 ex:seat2 ?l_seat .
+}]
+
+[DELETE {
+    ex:context ex:value "check_done" .
+} INSERT {
+    ex:context ex:value "assign_seats" .
+} WHERE {
+    ex:context ex:value "check_done" .
+}]
+

@@ -17,11 +17,12 @@ import diamond.retenetwork.ReteNode;
  */
 @SuppressWarnings("serial")
 public class DMain extends JFrame implements ActionListener {
+	private static final int maxNumFrames = 400;
 
     static JDesktopPane desktopPane = new JDesktopPane();
     static MessageInternalFrame mFrame = new MessageInternalFrame();
     static GraphInternalFrame gFrame = new GraphInternalFrame();
-    static DataInternalFrame[] dFrame = new DataInternalFrame[100];
+    static DataInternalFrame[] dFrame = new DataInternalFrame[maxNumFrames];
     static InputInternalFrame iFrame = new InputInternalFrame();
     static SolutionInternalFrame solutionFrame = new SolutionInternalFrame();
     // static TRepositoryInternalFrame qFrame = new TRepositoryInternalFrame();
@@ -61,9 +62,9 @@ public class DMain extends JFrame implements ActionListener {
         DMain.solutionFrame.setVisible(true);
         DMain.solutionFrame.setTitle("Solution");
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < maxNumFrames; i++) {
             DMain.dFrame[i] = new DataInternalFrame();
-            DMain.dFrame[i].setLocation(sizeX / 5 * 3 - 1 - i * 5, sizeY / 5 * 2 - i * 5);
+            DMain.dFrame[i].setLocation(sizeX / 5 * 3 - 1, sizeY / 5 * 2);
             DMain.dFrame[i].setSize(sizeX / 5 * 2 - 1, sizeY / 5 * 1);
             DMain.desktopPane.add(DMain.dFrame[i]);
             DMain.dFrame[i].setXY(sizeX / 5 * 2 - 1, sizeY / 5 * 1);

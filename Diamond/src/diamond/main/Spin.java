@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Scanner;
 
@@ -174,6 +175,8 @@ public class Spin {
                         break;
                     }
                 }
+            } else if(debugMode && command.equals("last-mem")) {
+            	manager.printLastReteMemory();	
             }
 
             else if (command.equals("nr-print")) {
@@ -262,6 +265,13 @@ public class Spin {
                 System.out.println("ResultSet:\n" + wm);
             }
             
+            else if (command.equals("export-result")) {
+            	String file = in.next();
+            	PrintWriter writer = new PrintWriter(file, "UTF-8");
+            	writer.println(wm);
+            	writer.close();
+            }
+            
             else if (command.equals("debugger")) {
                 int networkId = in.nextInt();
                 List<ReteNetwork> networks = manager.getSpinReteNetworks();
@@ -295,18 +305,21 @@ public class Spin {
         StringBuilder guide = new StringBuilder("Commands:\n");
         guide.append("    help : User guide.\n");
         guide.append("    exit : Terminate the program.\n");
-        guide.append("    tq-size <debugMode>: Get the number of tokens in the TokenQueue.\n");
-        guide.append("    tq-print <debugMode>: Print all tokens in the TokenQueue.\n");
+        guide.append("    tq-size : (debugMode) Get the number of tokens in the TokenQueue.\n");
+        guide.append("    tq-print : (debugMode) Print all tokens in the TokenQueue.\n");
         guide.append("    cs-size : Get the number of elements in the ConflictSet.\n");
         guide.append("    cs-print : Print all elements in the ConflictSet.\n");
-        guide.append("    nt-print <debugMode>: Peek the next token in the TokenQueue.\n");
-        guide.append("    nt-process <debugMode>: Propagate the next token through the Network.\n");
-        guide.append("    nt-quick-process <debugMode>: Propagate k tokens at once.\n");
+        guide.append("    nt-print : (debugMode) Peek the next token in the TokenQueue.\n");
+        guide.append("    nt-process : (debugMode) Propagate the next token through the Network.\n");
+        guide.append("    nt-quick-process <num_tokens> : (debugMode) Propagate k tokens at once.\n");
+        guide.append("    last-mem : (debugMode) Print the last memory of the ReteNetwork.\n");
         guide.append("    nr-print : Peek the next rule-element in the ConflictSet.\n");
-        guide.append("    nr-fire <debugMode>: Fire the next rule, obtaining result.\n");
-        guide.append("    nr-quick-fire <debugMode>: Fire k rules at once.\n");
-        guide.append("    run : Execute all to completion. Specify max number of steps.\n");
+        guide.append("    nr-fire : (debugMode) Fire the next rule, obtaining result.\n");
+        guide.append("    nr-quick-fire <num_rules> : (debugMode) Fire k rules at once.\n");
+        guide.append("    run <num_steps> : Execute all to completion. Specify max number of steps.\n");
         guide.append("    result-set : Get the current ResultSet.\n");
+        guide.append("    export-result <file> : Write the ResultSet to a file.\n");
+        guide.append("    debugger <rete_id> : Start the Diamond Debugger GUI for the k rule.\n");
         return guide.toString();
     }
     

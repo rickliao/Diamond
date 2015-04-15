@@ -105,7 +105,7 @@ public class TriplePatternTest extends ReteNode {
                     objMatch = true;
                 }
             } else if (testObj.getDataType() != DataType.VARIABLE) {
-                if (rdf.getObject().getData().equals(testObj.getData())) {
+                if (rdf.getObject().equals(testObj)) {
                     binding.setSatisfyingObject(testObj);
                     objMatch = true;
                 }

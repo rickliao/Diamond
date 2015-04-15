@@ -1,6 +1,6 @@
 package diamond.data;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -22,7 +22,7 @@ public class TripleToken {
     private final TokenTag tag;
     private final Timestamp timestamp;
     private int joinCounter;
-    public URL urlWhereTripleTokenCameFrom;
+    public URI urlWhereTripleTokenCameFrom;
     
     // Store all variable binds
     private final HashMap<String, Element> varBinds;
@@ -148,7 +148,7 @@ public class TripleToken {
     	int hash = 0;
     	for(String el : schema) {
     		Element val = varBinds.get(el);
-    		hash += el.hashCode() * (val != null ? val.getData().hashCode() : 0); 
+    		hash += el.hashCode() * (val != null ? val.hashCode() : 0); 
     	}
     	return hash;
     }

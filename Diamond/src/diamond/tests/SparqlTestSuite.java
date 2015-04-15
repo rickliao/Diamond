@@ -53,7 +53,7 @@ public class SparqlTestSuite {
         reteNetwork.createNetwork();
 
         // Shuffle tokens and insert them in the ReteNetwork
-        Collections.shuffle(tokenQueue);
+        tokenQueue.shuffle();
         for (TripleToken tripleToken : tokenQueue) {
             //System.out.println(tripleToken);
             reteNetwork.insertTokenIntoNetwork(tripleToken);
@@ -1116,18 +1116,18 @@ public class SparqlTestSuite {
         selectListForQueryEq5 = null;// clean-up
 
         // ******query-eq-graph-1.rq******
-        List<String> selectListForQueryEqGraph1 = new ArrayList<String>();
-        selectListForQueryEqGraph1.add("?x");
-        test("test" + FS + "Sparql" + FS + "query" + FS + "query-eq-graph-1.rq", "test" + FS + "Sparql" + FS + "data"
-                + FS + "data-eq.n3", RDFFormat.N3, expectedSolutionSetForQueryEqGraph1(selectListForQueryEqGraph1));
-        selectListForQueryEqGraph1 = null;// clean-up
+        //List<String> selectListForQueryEqGraph1 = new ArrayList<String>();
+        //selectListForQueryEqGraph1.add("?x");
+        //test("test" + FS + "Sparql" + FS + "query" + FS + "query-eq-graph-1.rq", "test" + FS + "Sparql" + FS + "data"
+        //        + FS + "data-eq.n3", RDFFormat.N3, expectedSolutionSetForQueryEqGraph1(selectListForQueryEqGraph1));
+        //selectListForQueryEqGraph1 = null;// clean-up
 
         // ******query-eq-graph-2.rq******
-        List<String> selectListForQueryEqGraph2 = new ArrayList<String>();
-        selectListForQueryEqGraph2.add("?x");
-        test("test" + FS + "Sparql" + FS + "query" + FS + "query-eq-graph-2.rq", "test" + FS + "Sparql" + FS + "data"
-                + FS + "data-eq.n3", RDFFormat.N3, expectedSolutionSetForQueryEqGraph2(selectListForQueryEqGraph2));
-        selectListForQueryEqGraph2 = null;// clean-up
+        //List<String> selectListForQueryEqGraph2 = new ArrayList<String>();
+        //selectListForQueryEqGraph2.add("?x");
+        //test("test" + FS + "Sparql" + FS + "query" + FS + "query-eq-graph-2.rq", "test" + FS + "Sparql" + FS + "data"
+        //       + FS + "data-eq.n3", RDFFormat.N3, expectedSolutionSetForQueryEqGraph2(selectListForQueryEqGraph2));
+        //selectListForQueryEqGraph2 = null;// clean-up
 
         // ******query-eq-graph-3.rq******
         List<String> selectListForQueryEqGraph3 = new ArrayList<String>();

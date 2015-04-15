@@ -1,7 +1,7 @@
 package diamond.managers;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
@@ -13,7 +13,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-
 import org.openrdf.model.Statement;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
@@ -26,12 +25,11 @@ import org.openrdf.sail.memory.MemoryStore;
 import diamond.data.Binding;
 import diamond.data.DataType;
 import diamond.data.Element;
+import diamond.data.RDFTriple;
 import diamond.data.SPO;
 import diamond.data.SolutionSet;
 import diamond.data.Timer;
-import diamond.data.Timestamp;
 import diamond.data.TokenQueue;
-import diamond.data.TokenTag;
 import diamond.data.TripleToken;
 import diamond.processors.QueryProcessor;
 import diamond.processors.URLProcessor;
@@ -45,7 +43,7 @@ import diamond.retenetwork.ReteNetwork;
  */
 public class LinkedDataManager {
 
-    private static final int NUM_THREADS = 4;
+    private static final int NUM_THREADS = 16;
     
     private final QueryProcessor queryProcessor;
     private final ReteNetwork reteNetwork;
@@ -75,44 +73,95 @@ public class LinkedDataManager {
      * 
      * @throws Exception
      */
-    public void executeQueryOnWebOfLinkedData(Integer steps, boolean hasTimer) throws Exception {
+    public QueryStats executeQueryOnWebOfLinkedData(LinkedDataCache myCache, Integer steps, boolean hasTimer, boolean verbose) throws Exception {
         Timer timer = new Timer();
         boolean done = false;
         int counter = 0, numTriples = 0;
-        Timer t2 = new Timer();
-        long timeSpentInRete = 0;
+        boolean useCache = (myCache != null);
+        LinkedDataCache cache = useCache ? myCache : null;
+        
+        if(useCache && verbose) System.out.println("Cached data for " + cache.size() + " URLs");
+        
         timer.start();
         while (done == false) {
-            if(!tokenQueue.isEmpty()) {	
-                TripleToken tripleToken = tokenQueue.dequeue();
-                t2.start();
-                boolean matched = reteNetwork.insertTokenIntoNetwork(tripleToken);
-                t2.stop();
-                timeSpentInRete += t2.timeInNanoseconds();
-                
-                if(matched) {
-                    Binding binding = tripleToken.getBindings().iterator().next();
-                    urlManager.add(urlProcessor.extractURLsFromBinding(binding));
-                }
+            if(!tokenQueue.isEmpty()) {
+            	if(verbose) System.out.println("Inserting " + tokenQueue.size() + " triples into Rete.");
+            	int numExtractedURLs = 0;
+            	while(!tokenQueue.isEmpty()) {
+            		TripleToken tripleToken = tokenQueue.dequeue();
+            		boolean matched = reteNetwork.insertTokenIntoNetwork(tripleToken);
+            		
+            		if(matched) {
+            			Binding binding = tripleToken.getBindings().iterator().next();
+            			List<URL> extractedURLs = urlProcessor.extractURLsFromBinding(binding);
+            			numExtractedURLs += extractedURLs.size();
+            			urlManager.add(extractedURLs);
+            		}
+            	}
+            	if(verbose) System.out.println("Done inserting triples! Extracted " + numExtractedURLs + " URLs.");
             } else { // <-- token queue is empty
-                if(urlManager.urlsStillNeedToBeDereferenced()) {
-                    Map<URL, Future<List<TripleToken>>> extractedData = new HashMap<URL, Future<List<TripleToken>>>();
+                if((steps == null || (--steps) >= 0) && urlManager.urlsStillNeedToBeDereferenced()) {
+                    Map<URI, Future<List<RDFTriple>>> extractedData = new HashMap<URI, Future<List<RDFTriple>>>();
+                    List<URI> cacheHitURLs = new LinkedList<URI>();
                     
-                    for(URL url : urlManager.getAllURLsForDereferencing()) {
-                        //System.out.println("Dereference: " + url);
-                        Callable<List<TripleToken>> derefURL = new DereferenceURL(url);
-                        extractedData.put(url, executor.submit(derefURL));
-                        ++counter;
+                    for(URI url : urlManager.getAllURLsForDereferencing()) {
+                    	boolean cacheHit = false;
+                    	if(useCache) {
+                    		List<RDFTriple> cachedTriples = cache.get(url);
+                    		if(cachedTriples != null) {
+                    			if(verbose) System.out.println("Cache hit for uri: " + url);
+                    			tokenQueue.addAll(cachedTriples, url);
+                    			if(verbose) System.out.println(cachedTriples.size() + " entries enqueued! Queue size: " + tokenQueue.size());
+                    			cacheHitURLs.add(url);
+                    			cacheHit = true;
+                    		}
+                    	}
+
+                    	if(!cacheHit) {
+                    		if(verbose) System.out.println("Dereference: " + url);
+                    		Callable<List<RDFTriple>> derefURL = new DereferenceURL(url);
+                    		extractedData.put(url, executor.submit(derefURL));
+                    		++counter;
+                    	}
+                    } for(URI cacheHitURL : cacheHitURLs) {
+                    	urlManager.updateStatusOfURLDereferenced(cacheHitURL, true);
                     }
                     
-                    for(Entry<URL, Future<List<TripleToken>>> entry : extractedData.entrySet()) {
+                    for(Entry<URI, Future<List<RDFTriple>>> entry : extractedData.entrySet()) {
                         boolean successfulDereference = false;
                         try {
-                            List<TripleToken >extractedTriples = entry.getValue().get();
+                            if(verbose) System.out.println("Gathering data from URL: " + entry.getKey());
+                            List<RDFTriple> extractedTriples = null;
+                            
+                            try {
+                            	extractedTriples = entry.getValue().get();
+                            } catch(InterruptedException e) {
+                            	System.out.println("Timed-out connecting to URL: " + entry.getKey());
+                            }
+                            if(extractedTriples == null) {
+                            	extractedTriples = new LinkedList<RDFTriple>();
+                            }
+                            
                             numTriples += extractedTriples.size();
-                            tokenQueue.addAll(extractedTriples);
+                            
+                            if(verbose) System.out.println("Extracted " + extractedTriples.size()  + " triples from URL: " + entry.getKey());
+                            tokenQueue.addAll(extractedTriples, entry.getKey());
+                            //write to cache
+                            for(RDFTriple triple:extractedTriples) {
+                            	cache.addToMap(entry.getKey(), triple);
+                            	//cache.addToCache(entry.getKey(), triple);
+                            }
+                            //If nothing is dereferenced add empty list to map
+                            //Otherwise, program will dereference it again next time
+                            if(extractedTriples.size() == 0) {
+                            	cache.addEmptyToMap(entry.getKey());
+                            }
+                            if(verbose) System.out.println(extractedTriples.size() + " entries enqueued! Queue size: " + tokenQueue.size());
                             successfulDereference = true;
-                        } catch (Exception e) {}
+                        } catch (Exception e) {
+                        	System.out.println("Caught exception while gathering data for URL: " + entry.getKey() + "\n" + e);
+                        	e.printStackTrace();
+                        }
                         urlManager.updateStatusOfURLDereferenced(entry.getKey(), successfulDereference);
                     }
                 } else {
@@ -121,13 +170,17 @@ public class LinkedDataManager {
             }
         }
         timer.stop();
+        //cache.close();
         
         SolutionSet solutionSet = reteNetwork.getSolutionSet();
-        System.out.println("Solution Set ... " + solutionSet.size() + " sols");
-        System.out.println(solutionSet.toString());
-        System.out.println("Dereferened URLs: " + counter + "; Tripples: " + numTriples);
-        System.out.println(timer.toString() +
-                " vs Time Spent In Rete " + timeSpentInRete/1000000000.0 + " sec");
+        //System.out.println("Solution Set ...\n");
+        //System.out.println(solutionSet.toString());
+        System.out.println("\nSolutions: " + solutionSet.size() + "; Dereferened URLs: " +
+        		counter + "; Tripples: " + numTriples);
+        if(hasTimer) System.out.println(timer.toString());
+        //for testing 
+        QueryStats result = new QueryStats(solutionSet, counter, numTriples);
+        return result;
     }
     
     /**
@@ -153,16 +206,17 @@ public class LinkedDataManager {
      * 
      * @author Slavcho Salvchev
      */
-    private static class DereferenceURL implements Callable<List<TripleToken>> {
+    private static class DereferenceURL implements Callable<List<RDFTriple>> {
 
-        private final URL url;
+        private final URI url;
+        private static int DEFAULT_TIMEOUT = 10000;
         
-        public DereferenceURL(URL url) { this.url = url; }
+        public DereferenceURL(URI url) { this.url = url; }
         
         @Override
-        public List<TripleToken> call() throws Exception {
+        public List<RDFTriple> call() throws Exception {
             if(url == null) throw new IllegalArgumentException();
-            List<TripleToken> result = new LinkedList<TripleToken>();
+            List<RDFTriple> result = new LinkedList<RDFTriple>();
             Repository repository = null;
             RepositoryConnection connection = null;
             
@@ -182,7 +236,8 @@ public class LinkedDataManager {
                     if(!urlConnectionEstablished) {
                         try {
                             rdfFormat = RDFFormat.N3;
-                            urlConnection = url.openConnection();
+                            urlConnection = url.toURL().openConnection();
+                            urlConnection.setConnectTimeout(DEFAULT_TIMEOUT);
                             urlConnection.addRequestProperty("accept", rdfFormat.getDefaultMIMEType());
                             instream = urlConnection.getInputStream();
                             connection.add(instream, url.toString(), rdfFormat);
@@ -208,15 +263,9 @@ public class LinkedDataManager {
                         String predicate = statement.getPredicate().toString();
                         String object = statement.getObject().toString();
                         
-                        Binding binding = new Binding();
-                        binding.setRDFTripleSubject(formElement(SPO.SUBJECT, subject));
-                        binding.setRDFTriplePredicate(formElement(SPO.PREDICATE, predicate));
-                        binding.setRDFTripleObject(formElement(SPO.OBJECT, object));
-                        
-                        TripleToken tripleToken = new TripleToken(TokenTag.PLUS, Timestamp.nextTimestamp());
-                        tripleToken.addTriple(binding);
-                        tripleToken.urlWhereTripleTokenCameFrom = url;
-                        result.add(tripleToken);
+                        RDFTriple rdfTriple = new RDFTriple(formElement(SPO.SUBJECT, subject),
+                        	formElement(SPO.PREDICATE, predicate), formElement(SPO.OBJECT, object));
+                        result.add(rdfTriple);
                     }
                 }
             } finally {
@@ -233,7 +282,7 @@ public class LinkedDataManager {
         /**
          * Return an element that is formed from data (which is a String).
          */
-        private Element formElement(SPO spo, String data) {
+        private static Element formElement(SPO spo, String data) {
             return new Element(spo, DataType.determineDataType(data), data);
         }
     }

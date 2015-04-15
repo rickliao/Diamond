@@ -2,6 +2,7 @@ package diamond.retenetwork;
 
 import java.util.Map;
 
+import diamond.bookkeeping.Common;
 import diamond.builtincall.BinaryBuiltInCall;
 import diamond.builtincall.BuiltInCall;
 import diamond.builtincall.UnaryBuiltInCall;
@@ -84,16 +85,16 @@ public class RelationalExpression {
      */
     private Element evalU(String op, Element x) {
         if (x != null && x.getDataType() == DataType.NUMBER) {
-            double val = toDouble(x.getData());
+            double val = Common.toDouble(x.getData());
             if (op.equals("!")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(!toBool(val)));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(!Common.toBool(val)));
             } else if (op.equals("-")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(-val));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(-val));
             } else if (op.equals("+")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(val));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(val));
             }
         } else if(x != null && op.equals("!")) {
-            return new Element(SPO.EXPR, DataType.NUMBER, wrap(x.getData().equals("\"\"")));
+            return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(x.getData().equals("\"\"")));
         }
         return null; /* Illegal RelExpression */
     }
@@ -104,20 +105,16 @@ public class RelationalExpression {
      * @return null upon bad RelExpression
      */
     private Element evalB(String op, Element arg1, Element arg2) {
-        //if(op.equals("!=")) {
-        //    System.out.println(arg1 + " " + arg2); // query 5 + DISTINCT
-        //}
-        
         if(arg1 == null) { /* Illegal RelExpression */
             return null;
         } else if (arg2 == null) {
             if(arg1.getDataType() == DataType.NUMBER) {
-                boolean t = toBool(toDouble(arg1.getData()));
+                boolean t = Common.toBool(Common.toDouble(arg1.getData()));
                 
                 if (op.equals("||")) {
-                    return new Element(SPO.EXPR, DataType.NUMBER, (t ? wrap(t) : null));
+                    return new Element(SPO.EXPR, DataType.NUMBER, (t ? Common.wrap(t) : null));
                 } else if (op.equals("&&")) {
-                    return new Element(SPO.EXPR, DataType.NUMBER, (t ? null : wrap(t)));
+                    return new Element(SPO.EXPR, DataType.NUMBER, (t ? null : Common.wrap(t)));
                 }
             } else return null; /* Illegal RelExpression */
         }
@@ -126,16 +123,16 @@ public class RelationalExpression {
         DataType arg2DataType = arg2.getDataType();
         
         if (op.equals("||")) {
-            return new Element(SPO.EXPR, DataType.NUMBER, wrap(toBool(arg1.getData()) | toBool(arg2.getData())));
+            return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(Common.toBool(arg1.getData()) | Common.toBool(arg2.getData())));
         } else if (op.equals("&&")) {
-            return new Element(SPO.EXPR, DataType.NUMBER, wrap(toBool(arg1.getData()) & toBool(arg2.getData())));
+            return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(Common.toBool(arg1.getData()) & Common.toBool(arg2.getData())));
         }
         
         else if(arg1.getDataType() != arg2.getDataType()) {
             if (op.equals("=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(false));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(false));
             } else if (op.equals("!=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(true));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(true));
             } else if (op.equals("+")) {
                 return new Element(SPO.EXPR, DataType.URL, arg1.getData() + arg2.getData());
             }
@@ -145,9 +142,9 @@ public class RelationalExpression {
             boolean match = arg1.getData().equals(arg2.getData());
             
             if (op.equals("=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(match));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(match));
             } else if (op.equals("!=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(!match));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(!match));
             }
         }
         
@@ -155,91 +152,53 @@ public class RelationalExpression {
             int diff = arg1.getData().compareTo(arg2.getData());
             
             if (op.equals("=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(diff == 0));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(diff == 0));
             } else if (op.equals("!=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(diff != 0));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(diff != 0));
             } else if (op.equals(">")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(diff > 0));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(diff > 0));
             } else if (op.equals(">=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(diff >= 0));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(diff >= 0));
             } else if (op.equals("<")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(diff < 0));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(diff < 0));
             } else if (op.equals("<=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(diff <= 0));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(diff <= 0));
             } else if (op.equals("+")) {
                 return new Element(SPO.EXPR, DataType.URL, arg1.getData() + arg2.getData());
             }
         }
         
         else if (arg1DataType == DataType.NUMBER && arg2DataType == DataType.NUMBER) {
-            double x = toDouble(arg1.getData());
-            double y = toDouble(arg2.getData());
+            double x = Common.toDouble(arg1.getData());
+            double y = Common.toDouble(arg2.getData());
             double diff = x - y;
             
             if (op.equals("+")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(x + y));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(x + y));
             } else if (op.equals("-")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(x - y));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(x - y));
             } else if (op.equals("*")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(x * y));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(x * y));
             } else if (op.equals("/")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(x / y));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(x / y));
             } else if (op.equals("=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(Math.abs(diff) < 1e-10));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(Math.abs(diff) < 1e-10));
             } else if (op.equals("!=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(Math.abs(diff) > 1e-10));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(Math.abs(diff) > 1e-10));
             } else if (op.equals(">")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(diff > 1e-10));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(diff > 1e-10));
             } else if (op.equals(">=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(diff >= 0));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(diff >= 0));
             } else if (op.equals("<")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(diff < -1e-10));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(diff < -1e-10));
             } else if (op.equals("<=")) {
-                return new Element(SPO.EXPR, DataType.NUMBER, wrap(diff <= 0));
+                return new Element(SPO.EXPR, DataType.NUMBER, Common.wrap(diff <= 0));
             }
         }
         
         return null; /* Illegal RelExpression */
     }
-
     
-    /**
-     * Helper Methods to map Doubles and Booleans
-     */
-    private Double toDouble(String elData) {
-        String strippedData = DataType.stripData(elData);
-
-        try {
-            return Double.parseDouble(strippedData);
-        } catch (NumberFormatException e) {}
-
-        if(strippedData.equals("true")) {
-            return 1.0;
-        } else if(strippedData.equals("false")) {
-            return 0.0;
-        }
-        
-        return null; /* Not a Numeric Element */
-    }
-    
-    private boolean toBool(String elData) {
-        Double val = toDouble(elData);
-        return (val == null ? !(elData.equals("\"\"")) : toBool(val));
-    }
-    
-    private boolean toBool(Double x) {
-        return (Math.abs(x) > 1e-10);
-    }
-
-    private String wrap(boolean x) {
-        return ((x == true) ? "1" : "0");
-    }
-
-    private String wrap(double x) {
-        Double val = new Double(x);
-        return val.toString();
-    }
-
     @Override
     public String toString() {
         return root.toString();

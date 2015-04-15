@@ -6,7 +6,7 @@ package diamond.main;
 import java.io.File;
 
 import diamond.gDebugger.DMain;
-import diamond.managers.LinkedDataManager;
+import diamond.managers.CacheClient;
 import diamond.managers.NativeStoreStorageManager;
 import diamond.processors.FileQueryProcessor;
 import diamond.processors.QueryProcessor;
@@ -25,19 +25,21 @@ public class Main {
     public static void main(String[] args) throws Exception {
         FileArg queryFileArg = new FileArg();
         FileArg dataFileArg = new FileArg();
+        FileArg cacheFileArg = new FileArg();
         DebugArg debugArg = new DebugArg();
         StepsArg stepsArg = new StepsArg();
-        TestSuiteArg testSuiteArg = new TestSuiteArg();
-        TimerArg timerArg = new TimerArg();
+        boolean timer = false;
+        boolean verbose = false;
 
         String manual = "";
         manual += "usage: Diamond.jar [parameters]\n";
-        manual += "		-sparqlfile 	<file>		Execute a SPARQL query file on the web of linked data. (May accompany with -datafile)\n";
-        manual += "		-debugger		    	Execute the Diamond GUI debugger. (Use this option with no other option)\n";
-        manual += "		-testsuite		    	Execute the RAP test suite. (Use this option with no other option)\n";
-        manual += "		-datafile 	<file>  	Input RDF Data File to execute query on. (Must use with -sparqlfile option)\n";
-        manual += "     		-depth      	<steps>     	Set maximum depth of link traversal. Do not use this feature for continuous querying.\n";
-        manual += "     		-timer                  	Execute Timer.\n";
+        manual += "    -sparqlfile <file>   Execute a SPARQL query file on the web of linked data. (May accompany with -cache option)\n";
+        manual += "    -debugger            Execute the Diamond GUI debugger. (Use this option with no other option)\n";
+        manual += "    -datafile <file>     Input RDF Data File to execute query locally. (Must use with -sparqlfile option)\n";
+        manual += "    -cache <file>        N3 RDF Data File serving as cache when query the web of linked data. (Must use with -sparqlfile option)\n";
+        manual += "    -depth <steps>       Set maximum depth of link traversal. Do not use this feature for continuous querying.\n";
+        manual += "    -verbose             Show the URLs that are being dereferenced when executing query on the web of linked data.\n";
+        manual += "    -timer               Execute Timer.\n";
 
         // iterate through the arguments
         for (int i = 0; i < args.length; ++i) {
@@ -49,111 +51,66 @@ public class Main {
                     String nextArg = args[i + 1];
                     queryFileArg.fileName = nextArg;
                 }
-            }
-
-            if (args[i].equals("-datafile")) {
+            } else if (args[i].equals("-cache")) {
+                // look at next argument for file name
+                if (i + 1 < args.length) {
+                    // store file name for future use
+                    String nextArg = args[i + 1];
+                    cacheFileArg.fileName = nextArg;
+                }
+            } else if (args[i].equals("-datafile")) {
                 // look at next argument for file name
                 if (i + 1 < args.length) {
                     // store file name for future use
                     String nextArg = args[i + 1];
                     dataFileArg.fileName = nextArg;
                 }
-            }
-
-            // if we find a debug flag
-            if (args[i].equals("-debugger")) {
+            } else if (args[i].equals("-debugger")) {
                 // make sure we have no other args
-                if (queryFileArg.ready() == false && testSuiteArg.ready() == false && stepsArg.ready() == false
-                        && timerArg.ready() == false) {
+                if (queryFileArg.ready() == false && stepsArg.ready() == false) {
                     // set debug flag for future use
                     debugArg.debug = true;
                 }
-            }
-
-            // if we find test flag
-            if (args[i].equals("-testsuite")) {
-                // make sure we have no other args
-                if (queryFileArg.ready() == false && debugArg.ready() == false && stepsArg.ready() == false) {
-                    // set test flag for future use
-                    testSuiteArg.test = true;
-                }
-            }
-
-            // if we find a depth flag
-            if (args[i].equals("-depth")) {
+            } else if (args[i].equals("-depth")) {
                 // look at next argument for file name
                 if (i + 1 < args.length) {
                     // store file name for future use
                     String nextArg = args[i + 1];
                     stepsArg.stepsArg = nextArg;
                 }
-            }
-
-            // if we find timer flag
-            if (args[i].equals("-timer")) {
+            } else if (args[i].equals("-timer")) {
                 // make sure we have no other args
                 if (debugArg.ready() == false) {
                     // set test flag for future use
-                    timerArg.timer = true;
+                    timer = true;
+                }
+            } else if (args[i].equals("-verbose")) {
+            	// make sure we have no other args
+                if (debugArg.ready() == false) {
+                    // set test flag for future use
+                    verbose = true;
                 }
             }
         }
 
-        if (queryFileArg.ready() == false && dataFileArg.ready() == false && debugArg.ready() == false
-                && testSuiteArg.ready() == false && stepsArg.ready() == false && timerArg.ready() == false) {
+        if (queryFileArg.ready() == false && dataFileArg.ready() == false && debugArg.ready() == false) {
             System.out.println(manual);
             System.exit(0);
-        } else if (queryFileArg.ready() == true && dataFileArg.ready() == false && debugArg.ready() == false
-                && testSuiteArg.ready() == false && stepsArg.ready() == false && timerArg.ready() == false) {
+        } else if (queryFileArg.ready() == true && dataFileArg.ready() == false && debugArg.ready() == false) {
             String fileName = queryFileArg.fileName;
             File file = new File(fileName);
+            Integer steps = stepsArg.ready() ? stepsArg.max : null;
 
-            QueryProcessor queryProcessor = new FileQueryProcessor(file, false);
-            queryProcessor.process();
-            
-            LinkedDataManager linkedDataManager = new LinkedDataManager(queryProcessor);
-            linkedDataManager.executeQueryOnWebOfLinkedData(null, false);
-            System.exit(0);
-        } else if (queryFileArg.ready() == true && dataFileArg.ready() == false && debugArg.ready() == false
-                && testSuiteArg.ready() == false && stepsArg.ready() == false && timerArg.ready() == true) {
-            String fileName = queryFileArg.fileName;
-            File file = new File(fileName);
-
-            QueryProcessor queryProcessor = new FileQueryProcessor(file, false);
-            queryProcessor.process();
-            LinkedDataManager linkedDataManager = new LinkedDataManager(queryProcessor);
-            linkedDataManager.executeQueryOnWebOfLinkedData(null, true);
-            System.exit(0);
-        } else if (queryFileArg.ready() == true && dataFileArg.ready() == false && debugArg.ready() == false
-                && testSuiteArg.ready() == false && stepsArg.ready() == true && timerArg.ready() == false) {
-            String fileName = queryFileArg.fileName;
-            File file = new File(fileName);
-
-            QueryProcessor queryProcessor = new FileQueryProcessor(file, false);
-            queryProcessor.process();
-            LinkedDataManager linkedDataManager = new LinkedDataManager(queryProcessor);
-            if (stepsArg.max < 0) {
+            if (steps != null && steps < 0) {
                 System.err.println("May not have a negative depth");
                 System.exit(1);
             }
-            linkedDataManager.executeQueryOnWebOfLinkedData(stepsArg.max, false);
+            CacheClient client = new CacheClient();
+            client.start();
+            String sol = client.executeQuery(file, steps, timer, verbose);
+            System.out.println(sol);
             System.exit(0);
-        } else if (queryFileArg.ready() == true && dataFileArg.ready() == false && debugArg.ready() == false
-                && testSuiteArg.ready() == false && stepsArg.ready() == true && timerArg.ready() == true) {
-            String fileName = queryFileArg.fileName;
-            File file = new File(fileName);
-
-            QueryProcessor queryProcessor = new FileQueryProcessor(file, false);
-            queryProcessor.process();
-            LinkedDataManager linkedDataManager = new LinkedDataManager(queryProcessor);
-            if (stepsArg.max < 0) {
-                System.err.println("May not have a negative depth");
-                System.exit(1);
-            }
-            linkedDataManager.executeQueryOnWebOfLinkedData(stepsArg.max, true);
-            System.exit(0);
-        } else if (queryFileArg.ready() == true && dataFileArg.ready() == true && debugArg.ready() == false
-                && testSuiteArg.ready() == false && stepsArg.ready() == false && timerArg.ready() == false) {
+        } else if (queryFileArg.ready() == true && dataFileArg.ready() == true && debugArg.ready() == false) {
             String queryFileName = queryFileArg.fileName;
             File queryFile = new File(queryFileName);
             String dataFileName = dataFileArg.fileName;
@@ -162,32 +119,13 @@ public class Main {
             QueryProcessor queryProcessor = new FileQueryProcessor(queryFile, false);
             queryProcessor.process();
             NativeStoreStorageManager nativeStore = new NativeStoreStorageManager(queryProcessor, dataFile);
-            nativeStore.executeQuery(false);
+            nativeStore.executeQuery(timer);
             System.exit(0);
-        } else if (queryFileArg.ready() == true && dataFileArg.ready() == true && debugArg.ready() == false
-                && testSuiteArg.ready() == false && stepsArg.ready() == false && timerArg.ready() == true) {
-            String queryFileName = queryFileArg.fileName;
-            File queryFile = new File(queryFileName);
-            String dataFileName = dataFileArg.fileName;
-            File dataFile = new File(dataFileName);
-
-            QueryProcessor queryProcessor = new FileQueryProcessor(queryFile, false);
-            queryProcessor.process();
-            NativeStoreStorageManager nativeStore = new NativeStoreStorageManager(queryProcessor, dataFile);
-            nativeStore.executeQuery(true);
-            System.exit(0);
-        } else if (queryFileArg.ready() == false && dataFileArg.ready() == false && debugArg.ready() == true
-                && testSuiteArg.ready() == false && stepsArg.ready() == false && timerArg.ready() == false) {
+        } else if (queryFileArg.ready() == false && dataFileArg.ready() == false && debugArg.ready() == true) {
             DMain.main(null);
-        } else if (queryFileArg.ready() == false && dataFileArg.ready() == false && debugArg.ready() == false
-                && testSuiteArg.ready() == true && stepsArg.ready() == false && timerArg.ready() == false) {
+        } else if (queryFileArg.ready() == false && dataFileArg.ready() == false && debugArg.ready() == false) {
             SparqlTestSuite testSuiteManager = new SparqlTestSuite();
-            testSuiteManager.executeTestSuite(false);
-            System.exit(0);
-        } else if (queryFileArg.ready() == false && dataFileArg.ready() == false && debugArg.ready() == false
-                && testSuiteArg.ready() == true && stepsArg.ready() == false && timerArg.ready() == true) {
-            SparqlTestSuite testSuiteManager = new SparqlTestSuite();
-            testSuiteManager.executeTestSuite(true);
+            testSuiteManager.executeTestSuite(timer);
             System.exit(0);
         } else {
             System.err.println("Unexpected arguments or combination of arguments ...\n");
@@ -210,6 +148,7 @@ class FileArg {
         else {
             // test to see that we can create a file with file name
             File file = new File(fileName);
+
             if (file.exists() == false) {
                 System.err.println("The file name \"" + fileName + "\" is not found.");
                 System.exit(1);
@@ -230,24 +169,6 @@ class DebugArg {
 
     boolean ready() {
         return debug;
-    }
-}
-
-class TestSuiteArg {
-
-    boolean test;
-
-    boolean ready() {
-        return test;
-    }
-}
-
-class TimerArg {
-
-    boolean timer;
-
-    boolean ready() {
-        return timer;
     }
 }
 

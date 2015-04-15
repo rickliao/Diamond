@@ -2,7 +2,6 @@ package diamond.tests;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.openrdf.rio.RDFFormat;
@@ -44,7 +43,7 @@ public class SparqlTests2012 {
         reteNetwork.createNetwork();
 
         // Shuffle tokens and insert them in the ReteNetwork
-        Collections.shuffle(tokenQueue);
+        tokenQueue.shuffle();
         for (TripleToken tripleToken : tokenQueue) {
             //System.out.println(tripleToken);
             reteNetwork.insertTokenIntoNetwork(tripleToken);

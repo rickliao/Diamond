@@ -3,16 +3,25 @@
  */
 package diamond.data;
 
+import java.io.Serializable;
+
+import diamond.bookkeeping.Common;
+
 /**
  * An Element refers to a particular piece of data in a Resource Description
  * Framework (RDF) triple.
  */
-public class Element {
+public class Element implements Serializable{
 
-    // instance variables
+
+	private static final long serialVersionUID = 1L;
+	// instance variables
     private SPO spo;
     private DataType dataType;
     private String data;
+    
+    private boolean isString = false;
+    private String normalized = null;
 
     /**
      * Create an element
@@ -22,13 +31,14 @@ public class Element {
      * @param data
      * 
      */
-    public Element(SPO spo, DataType dataType, java.lang.String data) {
+    public Element(SPO spo, DataType dataType, String data) {
         this.spo = spo;
         this.dataType = dataType;
         this.data = data;
+        register(data);
     }
 
-    /**
+	/**
      * Get SPO
      * 
      * @return the spo
@@ -79,8 +89,23 @@ public class Element {
      */
     public void setData(String data) {
         this.data = data;
+        register(data);
     }
 
+    private void register(String data) {
+    	int idx = data.indexOf(DataType.TYPE_DEF + DataType.STRING_DEF);
+    	if(idx > 1) {
+    		isString = true;
+    		normalized = data.substring(0, idx);
+    	} else if(data.startsWith("\"") && data.endsWith("\"")) {
+    		isString = true;
+    		normalized = data;
+    	} else {
+    		isString = false;
+    		normalized = null;
+    	}
+	}
+    
     /**
      * Return String representation of Element
      */
@@ -101,24 +126,13 @@ public class Element {
         if (obj instanceof Element) {
             Element thatElem = (Element) obj;
 
-            // return this.spo == thatElem.getSpo() //check if spo's equal
-            // && this.dataType == thatElem.getDataType() //check if data types
-            // equal
-            // && this.data.equals(thatElem.getData());//check if both pieces of
-            // data equal
-            // if(this.spo == thatElem.getSpo() && this.dataType ==
-            // thatElem.getDataType())
-            // {
-            if (this.getDataType() == DataType.BLANK_NODE && thatElem.getDataType() == DataType.BLANK_NODE) {
-                return this.data.startsWith("node") && thatElem.data.startsWith("node");
+            if(isString && thatElem.isString) {
+            	return this.normalized.equals(thatElem.normalized);
+        	} else if(this.dataType == DataType.NUMBER && thatElem.dataType == DataType.NUMBER) {
+            	return Math.abs(Common.toDouble(this.data) - Common.toDouble(thatElem.getData())) < 1.0e-5;
             } else {
                 return this.data.equals(thatElem.getData());
             }
-            // }
-            // else
-            // {
-            // return false;
-            // }
         }
 
         return false;
@@ -133,10 +147,13 @@ public class Element {
     public int hashCode() {
         int hash = 7;
 
-        hash = 31 * hash + (null == spo ? 0 : spo.hashCode());
-        hash = 31 * hash + (null == dataType ? 0 : dataType.hashCode());
-        hash = 31 * hash + (null == data ? 0 : data.hashCode());
-
+        if(isString) {
+        	hash = normalized.hashCode();
+        } else if(dataType == DataType.NUMBER) {
+        	hash = (int) (31 * hash + Common.toDouble(getData()));
+        } else {
+        	hash = data.hashCode();
+        }
         return hash;
     }
 

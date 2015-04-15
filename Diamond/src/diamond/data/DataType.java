@@ -10,7 +10,7 @@ public enum DataType {
     public static final String TYPE_DEF = "^^";
     public static final String INTEGER_DEF = "<http://www.w3.org/2001/XMLSchema#integer>";
     public static final String DOUBLE_DEF = "<http://www.w3.org/2001/XMLSchema#double>";
-    public static final String DECIMAL_DEF = "<http://www.w3.org/2001/XMLSchema#double>";
+    public static final String DECIMAL_DEF = "<http://www.w3.org/2001/XMLSchema#decimal>";
     public static final String BOOLEAN_DEF = "<http://www.w3.org/2001/XMLSchema#boolean>";
     public static final String STRING_DEF = "<http://www.w3.org/2001/XMLSchema#string>";
     
@@ -33,8 +33,8 @@ public enum DataType {
     public static boolean isNumber(String data) {
         boolean isNumber = false;
         if(data.contains(TYPE_DEF)) {
-            if(data.contains(INTEGER_DEF) || data.contains(DOUBLE_DEF) || data.contains(DECIMAL_DEF)
-                    || data.contains(DOUBLE_DEF) || data.contains(BOOLEAN_DEF)) {
+            if(data.contains(INTEGER_DEF) || data.contains(DOUBLE_DEF) ||
+            		data.contains(DECIMAL_DEF) || data.contains(BOOLEAN_DEF)) {
                 isNumber = true;
             }
         } else {
@@ -77,7 +77,7 @@ public enum DataType {
      */
     public static String stripData(String data) {
         String resultData = data;
-        
+        try {
         if(data.charAt(0) == '"') {
             int idx_def = data.indexOf("\"^^");
             int idx_lang = data.indexOf("\"@");
@@ -90,7 +90,7 @@ public enum DataType {
             } else if(data.charAt(dataLen - 1) == '"') {
                 resultData = data.substring(1, dataLen - 1);
             }
-        }
+        }} catch(Exception e) {System.out.println(data);}
         return resultData;
     }
 }

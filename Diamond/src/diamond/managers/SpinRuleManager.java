@@ -72,7 +72,7 @@ public class SpinRuleManager {
                 ConflictSetUnit csu = new ConflictSetUnit(spinRN.getSpinRule(), tt);
                 conflictSet.add(csu);
             }
-            antecedents.clear();
+            //antecedents.clear();
         }
     }
 
@@ -140,4 +140,10 @@ public class SpinRuleManager {
 
         System.out.println("\nCheckpoint");
     }
+
+	public void printLastReteMemory() {
+		for (ReteNetwork spinRN : spinReteNetworks) {
+            System.out.println("\n" + spinRN.getLastMemory().getMemory());
+        }
+	}
 }

@@ -424,7 +424,7 @@ public class InputInternalFrame extends MyInternalFrame implements ActionListene
         @Override
         public void run() {
             try {
-                linkedDataManager.executeQueryOnWebOfLinkedData(null, false);
+                linkedDataManager.executeQueryOnWebOfLinkedData(null, null, false, false);
             } catch (Exception doE) {
                 String msg = doE.getMessage();
                 System.out.println("~~~~" + doE);

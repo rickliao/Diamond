@@ -1,0 +1,11 @@
+PREFIX ex: <http://www.example.org/>
+
+SELECT ?id ?n1 ?seat1 ?seat2 ?n2
+WHERE {
+    ?_x0 ex:type ex:seating .
+    ?_x0 ex:name1 ?n1 .
+    ?_x0 ex:seat1 ?seat1 .
+    ?_x0 ex:seat2 ?seat2 .
+    ?_x0 ex:name2 ?n2 .
+    ?_x0 ex:id ?id .
+}

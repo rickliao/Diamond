@@ -1,0 +1,47 @@
+@prefix ex: <http://www.example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:context ex:value "start" .
+ex:last_seat ex:value 6.0 .
+ex:next_id ex:value 0 .
+
+ex:c1 ex:type ex:count .
+ex:c1 ex:c "0"^^xsd:integer .
+
+ex:p1 ex:type ex:guest .
+ex:p1 ex:name ex:Charlotte .
+ex:p1 ex:sex ex:female .
+ex:p1 ex:hobby ex:music .
+ex:p1 ex:hobby ex:dancing .
+
+ex:p2 ex:type ex:guest .
+ex:p2 ex:name ex:Matt .
+ex:p2 ex:sex ex:male .
+ex:p2 ex:hobby ex:dancing .
+ex:p2 ex:hobby ex:swimming .
+
+ex:p3 ex:type ex:guest .
+ex:p3 ex:name ex:Kerry .
+ex:p3 ex:sex ex:female .
+ex:p3 ex:hobby ex:dancing .
+ex:p3 ex:hobby ex:reading .
+ex:p4 ex:hobby ex:soccer .
+
+ex:p4 ex:type ex:guest .
+ex:p4 ex:name ex:Tom .
+ex:p4 ex:sex ex:male .
+ex:p4 ex:hobby ex:soccer .
+ex:p4 ex:hobby ex:reading .
+
+ex:p5 ex:type ex:guest .
+ex:p5 ex:name ex:Natasha .
+ex:p5 ex:sex ex:female .
+ex:p5 ex:hobby ex:dancing .
+ex:p5 ex:hobby ex:reading .
+ex:p5 ex:hobby ex:soccer .
+
+ex:p6 ex:type ex:guest .
+ex:p6 ex:name ex:Steven .
+ex:p6 ex:sex ex:male .
+ex:p6 ex:hobby ex:soccer .
+ex:p6 ex:hobby ex:music .
