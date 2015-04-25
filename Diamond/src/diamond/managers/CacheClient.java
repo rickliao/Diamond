@@ -27,7 +27,7 @@ public class CacheClient {
 	
 	public String executeQuery(File query, int steps, boolean timer, boolean verbose) throws InterruptedException, TimeoutException, ExecutionException, IOException, ClassNotFoundException {
 		ContentResponse response = httpClient.newRequest("http://localhost:8080/?query="+query.toString()+"&steps="+steps+"&timer="+timer+"&verbose="+verbose)
-                .timeout(100, TimeUnit.SECONDS)
+                .timeout(1000000, TimeUnit.SECONDS)
                 .send();
         int status = response.getStatus();
         if(status == 200) {

@@ -20,7 +20,8 @@ public class CacheServer {
         server.addConnector(http);
  
         // Set a handler
-        server.setHandler(new LinkedDataCacheHandler(new File("cache.n3")));
+        //Cache is saved in the location as indicated
+        server.setHandler(new LinkedDataCacheHandler(new File("/Diamond/cache")));
  
         // Start the server
         server.start();

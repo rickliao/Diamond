@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -13,6 +14,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+
 import org.openrdf.model.Statement;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
@@ -90,6 +92,7 @@ public class LinkedDataManager {
             	while(!tokenQueue.isEmpty()) {
             		TripleToken tripleToken = tokenQueue.dequeue();
             		boolean matched = reteNetwork.insertTokenIntoNetwork(tripleToken);
+            		System.out.println(tripleToken.getBindings().iterator().next());
             		
             		if(matched) {
             			Binding binding = tripleToken.getBindings().iterator().next();
@@ -107,8 +110,18 @@ public class LinkedDataManager {
                     for(URI url : urlManager.getAllURLsForDereferencing()) {
                     	boolean cacheHit = false;
                     	if(useCache) {
-                    		List<RDFTriple> cachedTriples = cache.get(url);
-                    		if(cachedTriples != null) {
+                    		List<RDFTriple> cachedTriples = cache.dereference(url);
+                    		//If already dereferenced the triple and returned nothing
+                    		if(cachedTriples != null && cachedTriples.size() == 1) {
+                    			RDFTriple triple = cachedTriples.get(0);
+                    			if(triple.getPredicate().getData().equals("http://null.null")) {
+                    				if(verbose) System.out.println("Cache hit for uri: " + url);
+                    				cachedTriples = new LinkedList<RDFTriple>();
+                    				if(verbose) System.out.println(cachedTriples.size() + " entries enqueued! Queue size: " + tokenQueue.size());
+                    				cacheHitURLs.add(url);
+                    				cacheHit = true;
+                    			}
+                    		} else if(cachedTriples != null) {
                     			if(verbose) System.out.println("Cache hit for uri: " + url);
                     			tokenQueue.addAll(cachedTriples, url);
                     			if(verbose) System.out.println(cachedTriples.size() + " entries enqueued! Queue size: " + tokenQueue.size());
@@ -140,6 +153,9 @@ public class LinkedDataManager {
                             }
                             if(extractedTriples == null) {
                             	extractedTriples = new LinkedList<RDFTriple>();
+                            	//If nothing is dereferenced add filler to repo
+                                //Otherwise, program will dereference it again next time
+                            	//cache.addEmptyToCache(entry.getKey());
                             }
                             
                             numTriples += extractedTriples.size();
@@ -148,13 +164,7 @@ public class LinkedDataManager {
                             tokenQueue.addAll(extractedTriples, entry.getKey());
                             //write to cache
                             for(RDFTriple triple:extractedTriples) {
-                            	cache.addToMap(entry.getKey(), triple);
-                            	//cache.addToCache(entry.getKey(), triple);
-                            }
-                            //If nothing is dereferenced add empty list to map
-                            //Otherwise, program will dereference it again next time
-                            if(extractedTriples.size() == 0) {
-                            	cache.addEmptyToMap(entry.getKey());
+                            	cache.addToCache(entry.getKey(), triple);
                             }
                             if(verbose) System.out.println(extractedTriples.size() + " entries enqueued! Queue size: " + tokenQueue.size());
                             successfulDereference = true;
