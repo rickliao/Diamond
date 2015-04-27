@@ -91,8 +91,8 @@ public class LinkedDataManager {
             	int numExtractedURLs = 0;
             	while(!tokenQueue.isEmpty()) {
             		TripleToken tripleToken = tokenQueue.dequeue();
+            		System.out.println("tripleToken = "+tripleToken);
             		boolean matched = reteNetwork.insertTokenIntoNetwork(tripleToken);
-            		System.out.println(tripleToken.getBindings().iterator().next());
             		
             		if(matched) {
             			Binding binding = tripleToken.getBindings().iterator().next();
@@ -180,15 +180,11 @@ public class LinkedDataManager {
             }
         }
         timer.stop();
-        //cache.close();
         
         SolutionSet solutionSet = reteNetwork.getSolutionSet();
-        //System.out.println("Solution Set ...\n");
-        //System.out.println(solutionSet.toString());
         System.out.println("\nSolutions: " + solutionSet.size() + "; Dereferened URLs: " +
         		counter + "; Tripples: " + numTriples);
         if(hasTimer) System.out.println(timer.toString());
-        //for testing 
         QueryStats result = new QueryStats(solutionSet, counter, numTriples);
         return result;
     }

@@ -71,7 +71,7 @@ public class LinkedDataCache {
 			}
 		}*/
 		//write this statement to cache
-		URI subject = factory.createURI(rdfTriple.getSubject().getData());
+		Resource subject = factory.createURI(rdfTriple.getSubject().getData());
 		URI predicate = factory.createURI(rdfTriple.getPredicate().getData());
 		Literal object = factory.createLiteral(rdfTriple.getObject().getData());
 		URI context = factory.createURI(uri.toString());

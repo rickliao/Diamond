@@ -3,14 +3,11 @@
  */
 package diamond.data;
 
-import java.io.Serializable;
-
 /**
  * An RDFTriple that contains a subject, predicate, and object.
  */
-public class RDFTriple implements Comparable<RDFTriple>, Serializable {
+public class RDFTriple implements Comparable<RDFTriple> {
 
-	private static final long serialVersionUID = 1202131338735338931L;
 	// instance variables
     Element subject;
     Element predicate;

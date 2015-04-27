@@ -11,10 +11,8 @@ import diamond.bookkeeping.Common;
  * An Element refers to a particular piece of data in a Resource Description
  * Framework (RDF) triple.
  */
-public class Element implements Serializable{
+public class Element {
 
-
-	private static final long serialVersionUID = 1L;
 	// instance variables
     private SPO spo;
     private DataType dataType;

@@ -75,13 +75,6 @@ public class LinkedDataCacheHandler extends AbstractHandler{
         pw.print(sol.getSolutionSet().toString());
         response.setStatus(HttpServletResponse.SC_OK);
         baseRequest.setHandled(true);
-        
-        //Update the cache
-        /*try {
-			cache = new LinkedDataCache(cacheFile);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}*/
 	}
 
 }
