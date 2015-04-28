@@ -3,8 +3,6 @@
  */
 package diamond.data;
 
-import java.io.Serializable;
-
 import diamond.bookkeeping.Common;
 
 /**

@@ -12,11 +12,6 @@ import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
-import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.query.BindingSet;
-import org.openrdf.query.QueryLanguage;
-import org.openrdf.query.TupleQuery;
-import org.openrdf.query.TupleQueryResult;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -35,9 +30,6 @@ public class LinkedDataCache {
 	private Repository repository = null;
 	private RepositoryConnection connection = null;
 	private ValueFactory factory = null;
-	private URI invalidSubject = null;
-	private URI invalidPredicate = null;
-	private Literal invalidObject = null;
 	
 	public LinkedDataCache(File cacheFile) throws Exception {
         try {
@@ -46,10 +38,7 @@ public class LinkedDataCache {
             //repository = new SailRepository(new NativeStore(cacheFile));
             repository.initialize();
             connection = repository.getConnection();
-            factory = ValueFactoryImpl.getInstance();
-            invalidSubject = factory.createURI("http://null.null");
-        	invalidPredicate = factory.createURI("http://null.null");
-        	invalidObject = factory.createLiteral("http://null.null");
+            factory = connection.getValueFactory();
         } catch(Exception e) {
         	e.printStackTrace();
         }
@@ -57,19 +46,22 @@ public class LinkedDataCache {
 	
 	public void addToCache(java.net.URI uri, RDFTriple rdfTriple) {
 		//check if previously empty
-		/*List<RDFTriple> triples = dereference(uri);
+		List<RDFTriple> triples = dereference(uri);
 		if(triples != null && triples.size() == 1) {
 			RDFTriple prev = triples.get(0);
-			if(prev.getPredicate().getData().equals("http://null.null")) {
+			if(prev.getPredicate().getData().toString().equals("http://null.null")) {
 				//remove filler
 				URI context = factory.createURI(uri.toString());
+				Resource invalidSubject = factory.createURI("http://null.null");
+		    	URI invalidPredicate = factory.createURI("http://null.null");
+		    	Value invalidObject = factory.createLiteral("http://null.null");
 				try {
 					connection.remove(invalidSubject, invalidPredicate, invalidObject, context);
 				} catch (RepositoryException e) {
 					e.printStackTrace();
 				}
 			}
-		}*/
+		}
 		//write this statement to cache
 		Resource subject = factory.createURI(rdfTriple.getSubject().getData());
 		URI predicate = factory.createURI(rdfTriple.getPredicate().getData());
@@ -85,6 +77,9 @@ public class LinkedDataCache {
 	
 	public void addEmptyToCache(java.net.URI key) {
 		URI context = factory.createURI(key.toString());
+		Resource invalidSubject = factory.createURI("http://null.null");
+    	URI invalidPredicate = factory.createURI("http://null.null");
+    	Value invalidObject = factory.createLiteral("http://null.null");
 		try{
 			connection.add(invalidSubject, invalidPredicate, invalidObject, context);
 		} catch(RepositoryException e) {
@@ -102,38 +97,12 @@ public class LinkedDataCache {
                 Statement statement = rs.next();
                 Element subject = formElement(SPO.SUBJECT, statement.getSubject().toString());
                 Element predicate = formElement(SPO.PREDICATE, statement.getPredicate().toString());
-                Element object = formElement(SPO.OBJECT, statement.getObject().toString());
-                
+                Element object = formElement(SPO.OBJECT, statement.getObject().stringValue());
                 if(subject.getDataType() == DataType.URL) {
                 	RDFTriple triple = new RDFTriple(subject, predicate, object);
                 	triples.add(triple);
                 }
             }
-	      	  
-			/*
-			String queryString = "SELECT ?x ?p ?y  WHERE { GRAPH <"+uri.toString()+"> { ?x ?p ?y} } ";
-	      	  
-		  	  TupleQuery tupleQuery = connection.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
-		
-		  	  TupleQueryResult result = tupleQuery.evaluate();
-		  	  try {
-		  	      // iterate over the result
-		  		  while (result.hasNext()) {  
-		  			  BindingSet bindingSet = result.next();
-		  			  Value sub = bindingSet.getValue("x");
-		  			  Value pred = bindingSet.getValue("p");
-		  			  Value obj = bindingSet.getValue("y");
-		
-		  			  RDFTriple triple = new RDFTriple();
-		  			  triple.setSubject(formElement(SPO.SUBJECT, sub.toString()));
-		  			  triple.setPredicate(formElement(SPO.PREDICATE, pred.toString()));
-		  			  triple.setObject(formElement(SPO.OBJECT, obj.toString()));
-		  			  triples.add(triple);
-		        }
-		  	  }
-		  	  finally {
-		  	      result.close();
-		  	  }*/
          } catch(Exception e) {
         	 e.printStackTrace();
          }

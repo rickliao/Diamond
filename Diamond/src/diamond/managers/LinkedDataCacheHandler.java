@@ -22,9 +22,7 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 	public LinkedDataCacheHandler(File myCacheFile) {
 		try {
 			cacheFile = myCacheFile;
-			System.out.println("reading cache");
 			cache = new LinkedDataCache(cacheFile);
-			System.out.println("finished reading cache");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

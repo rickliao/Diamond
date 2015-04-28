@@ -5,7 +5,6 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +90,6 @@ public class LinkedDataManager {
             	int numExtractedURLs = 0;
             	while(!tokenQueue.isEmpty()) {
             		TripleToken tripleToken = tokenQueue.dequeue();
-            		System.out.println("tripleToken = "+tripleToken);
             		boolean matched = reteNetwork.insertTokenIntoNetwork(tripleToken);
             		
             		if(matched) {
@@ -116,7 +114,7 @@ public class LinkedDataManager {
                     			RDFTriple triple = cachedTriples.get(0);
                     			if(triple.getPredicate().getData().equals("http://null.null")) {
                     				if(verbose) System.out.println("Cache hit for uri: " + url);
-                    				cachedTriples = new LinkedList<RDFTriple>();
+                    				//cachedTriples = new LinkedList<RDFTriple>();
                     				if(verbose) System.out.println(cachedTriples.size() + " entries enqueued! Queue size: " + tokenQueue.size());
                     				cacheHitURLs.add(url);
                     				cacheHit = true;
@@ -153,9 +151,11 @@ public class LinkedDataManager {
                             }
                             if(extractedTriples == null) {
                             	extractedTriples = new LinkedList<RDFTriple>();
+                            }
+                            if(extractedTriples.size() == 0) {
                             	//If nothing is dereferenced add filler to repo
                                 //Otherwise, program will dereference it again next time
-                            	//cache.addEmptyToCache(entry.getKey());
+                            	cache.addEmptyToCache(entry.getKey());
                             }
                             
                             numTriples += extractedTriples.size();
