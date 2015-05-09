@@ -1,6 +1,8 @@
 package diamond.managers;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -10,6 +12,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.openrdf.model.impl.BNodeImpl;
 
 import diamond.processors.FileQueryProcessor;
 import diamond.processors.QueryProcessor;
@@ -17,12 +20,14 @@ import diamond.processors.QueryProcessor;
 public class LinkedDataCacheHandler extends AbstractHandler{
 	
 	private LinkedDataCache cache = null;
+	private LinkedDataCacheProv cacheProv = null;
 	private File cacheFile = null;
 
 	public LinkedDataCacheHandler(File myCacheFile) {
 		try {
 			cacheFile = myCacheFile;
-			cache = new LinkedDataCache(cacheFile);
+			//cache = new LinkedDataCache(cacheFile);
+			cacheProv = new LinkedDataCacheProv(cacheFile);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -36,6 +41,7 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 		boolean timer = false;
 		boolean verbose = false;
 		QueryProcessor queryProcessor = null;
+		String query = null;
 		for(String op:options) {
 			String[] varValue = op.split("=");
 			String variable = varValue[0];
@@ -44,6 +50,7 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 				case "query": 
 					File qFile = new File(value);
 					queryProcessor = new FileQueryProcessor(qFile, false);
+					query = readFile(qFile.toString());
 					break;
 				case "steps":
 					steps = Integer.parseInt(value);
@@ -61,8 +68,10 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 		QueryStats sol = null;
 		try {
 			queryProcessor.process();
-			LinkedDataManager linkedDataManager = new LinkedDataManager(queryProcessor);
-			sol = linkedDataManager.executeQueryOnWebOfLinkedData(cache, steps, timer, verbose);
+			//LinkedDataManager linkedDataManager = new LinkedDataManager(queryProcessor);
+			//sol = linkedDataManager.executeQueryOnWebOfLinkedData(cache, steps, timer, verbose);
+			LinkedDataManagerProv linkedDataManager = new LinkedDataManagerProv(queryProcessor, query);
+			sol = linkedDataManager.executeQueryOnWebOfLinkedData(cacheProv, steps, timer, verbose);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -73,6 +82,23 @@ public class LinkedDataCacheHandler extends AbstractHandler{
         pw.print(sol.getSolutionSet().toString());
         response.setStatus(HttpServletResponse.SC_OK);
         baseRequest.setHandled(true);
+	}
+	
+	private String readFile(String file) throws IOException {
+		BufferedReader reader = new BufferedReader(new FileReader(file));
+	    String line = null;
+	    StringBuilder stringBuilder = new StringBuilder();
+	    String ls = System.getProperty("line.separator");
+		try {
+		    while((line = reader.readLine()) != null ) {
+		        stringBuilder.append( line );
+		        stringBuilder.append( ls );
+		    }
+		} finally {
+			reader.close();
+		}
+
+	    return stringBuilder.toString();
 	}
 
 }

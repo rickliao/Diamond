@@ -1,0 +1,5 @@
+select ?x
+where {
+?x <http://dbpedia.org/ontology/birthPlace> <http://dbpedia.org/resource/El_Paso,_Texas>.
+?x <http://dbpedia.org/ontology/birthYear> "1968-01-01"^^xsd:date
+}

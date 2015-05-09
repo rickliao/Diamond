@@ -23,13 +23,13 @@ import diamond.data.Element;
 import diamond.data.RDFTriple;
 import diamond.data.SPO;
 
-public class LinkedDataCache {
+public class LinkedDataCacheProv {
 	
 	private Repository repository = null;
 	private RepositoryConnection connection = null;
 	private ValueFactory factory = null;
 	
-	public LinkedDataCache(File cacheFile) throws Exception {
+	public LinkedDataCacheProv(File cacheFile) throws Exception {
         try {
             // set up and initialize repository
             repository = new SailRepository(new MemoryStore());
@@ -42,55 +42,90 @@ public class LinkedDataCache {
         }
 	}
 	
-	public void addToCache(java.net.URI uri, RDFTriple rdfTriple) {
+	public void addToCache(java.net.URI uri, String query, RDFTriple rdfTriple) {
 		//check if previously empty
-		List<RDFTriple> triples = dereference(uri);
-		if(triples != null && triples.size() == 1) {
-			RDFTriple prev = triples.get(0);
-			if(prev.getPredicate().getData().toString().equals("http://null.null")) {
-				//remove filler
-				URI context = factory.createURI(uri.toString());
-				Resource invalidSubject = factory.createURI("http://null.null");
-		    	URI invalidPredicate = factory.createURI("http://null.null");
-		    	Value invalidObject = factory.createLiteral("http://null.null");
-				try {
-					connection.remove(invalidSubject, invalidPredicate, invalidObject, context);
-				} catch (RepositoryException e) {
-					e.printStackTrace();
-				}
+		List<RDFTriple> triples = null;
+		try {
+			triples = dereference(uri, query);
+			if(triples != null && triples.size() == 1) {
+				removeEmptyFromCache(uri, triples);
 			}
+		} catch (RepositoryException e1) {
+			e1.printStackTrace();
 		}
-		//write this statement to cache
+		
+		//check if a "null" triple already exist, if yes remove
+		removeEmptyFromCache(uri, triples);
+		
+		//write the RDF triple to cache
 		Resource subject = factory.createURI(rdfTriple.getSubject().getData());
 		URI predicate = factory.createURI(rdfTriple.getPredicate().getData());
 		Literal object = factory.createLiteral(rdfTriple.getObject().getData());
 		URI context = factory.createURI(uri.toString());
-
+		
 		try {
 			connection.add(subject, predicate, object, context);
+			//Distinguish which queries this query belongs to
+			addQueryConnection(uri, query);
 		} catch (RepositoryException e) {
 			e.printStackTrace();
 		} 
 	}
 	
-	public void addEmptyToCache(java.net.URI key) {
+	//Add filler triple if URI does not dereference to anything
+	public void addEmptyToCache(java.net.URI key, String query) {
 		URI context = factory.createURI(key.toString());
 		Resource invalidSubject = factory.createURI("http://null.null");
     	URI invalidPredicate = factory.createURI("http://null.null");
     	Value invalidObject = factory.createLiteral("http://null.null");
 		try{
 			connection.add(invalidSubject, invalidPredicate, invalidObject, context);
+			
+			//Distinguish which queries this query belongs to
+			addQueryConnection(key, query);
 		} catch(RepositoryException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public List<RDFTriple> dereference(java.net.URI uri) {
-		List<RDFTriple> triples = new ArrayList<RDFTriple>();
-		try {
+	//check if a "null" triple already exist, if yes remove
+	private void removeEmptyFromCache(java.net.URI uri, List<RDFTriple> triples) {
+		RDFTriple prev = triples.get(0);
+		if(prev.getPredicate().getData().toString().equals("http://null.null")) {
+			//remove filler
 			URI context = factory.createURI(uri.toString());
-			RepositoryResult<Statement> rs  = connection.getStatements(null, null, null, false, context);
-	      	  
+			Resource invalidSubject = factory.createURI("http://null.null");
+	    	URI invalidPredicate = factory.createURI("http://null.null");
+	    	Value invalidObject = factory.createLiteral("http://null.null");
+			try {
+				connection.remove(invalidSubject, invalidPredicate, invalidObject, context);
+			} catch (RepositoryException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public List<RDFTriple> dereference(java.net.URI uri, String query) throws RepositoryException {
+		List<RDFTriple> triples = new ArrayList<RDFTriple>();
+		
+		//check if uri match to any query
+		URI context = factory.createURI(uri.toString());
+		URI isPartOf = factory.createURI("http://dbpedia.org/ontology/isPartOf");
+		Literal queryLiteral = factory.createLiteral(query);
+		RepositoryResult<Statement> queryRes = null;
+		try {
+			queryRes = connection.getStatements (context, isPartOf, queryLiteral, false);
+			if(queryRes.hasNext() == false) {
+				return null;
+			}
+		} finally{
+			queryRes.close();
+		}
+		
+		//if matched to query
+		RepositoryResult<Statement> rs = null;
+		try {
+			rs = connection.getStatements(null, null, null, false, context);
 			while (rs.hasNext()) {
                 Statement statement = rs.next();
                 Element subject = formElement(SPO.SUBJECT, statement.getSubject().toString());
@@ -101,8 +136,8 @@ public class LinkedDataCache {
                 	triples.add(triple);
                 }
             }
-         } catch(Exception e) {
-        	 e.printStackTrace();
+         } finally{
+        	 rs.close();
          }
 		
 		//If no result
@@ -110,6 +145,21 @@ public class LinkedDataCache {
 			return null;
 		}
 		return triples;
+	}
+	
+	private void addQueryConnection(java.net.URI uri, String query) throws RepositoryException {
+		URI subject = factory.createURI(uri.toString());
+		URI isPartOf = factory.createURI("http://dbpedia.org/ontology/isPartOf");
+		Literal queryLiteral = factory.createLiteral(query);
+		RepositoryResult<Statement> rs = null;
+		try {
+			rs = connection.getStatements(subject, isPartOf, queryLiteral, false);
+			if(rs.hasNext() == false) {
+				connection.add(subject, isPartOf, queryLiteral);
+			}
+		} finally {
+			rs.close();
+		}
 	}
 	
 	public long size() {

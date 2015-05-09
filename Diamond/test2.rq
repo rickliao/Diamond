@@ -1,0 +1,6 @@
+select ?x ?y ?z
+where {
+<http://dbpedia.org/resource/Apple> <http://dbpedia.org/ontology/family> ?x.
+?x <http://dbpedia.org/ontology/order> ?y.
+?y <http://dbpedia.org/ontology/kingdom> ?z
+}

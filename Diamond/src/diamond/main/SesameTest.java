@@ -2,6 +2,7 @@ package diamond.main;
 
 import java.io.File;
 
+import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
@@ -30,20 +31,23 @@ import diamond.data.SPO;
 public class SesameTest {
     
 	public static void main(String[] args) throws RepositoryException {
-		Repository repository = new SailRepository(new MemoryStore(new File("/Diamond/cache")));
+		Repository repository = new SailRepository(new MemoryStore());
         repository.initialize();
         RepositoryConnection connection = repository.getConnection();
         
         try {
         	//connection.add(new File("cache.n3"), null, RDFFormat.N3);
-        	connection.clearNamespaces();
-        	System.out.println(connection.isEmpty());
         	ValueFactory factory = ValueFactoryImpl.getInstance();
         	URI sub = factory.createURI("http://example.com");
         	URI pred = factory.createURI("http://example.com");
         	URI obj = factory.createURI("http://example.com");
         	URI context = factory.createURI("http://hi.com");
         	connection.add(sub, pred, obj, context);
+        	
+        	URI sub1 = factory.createURI("http://one.com");
+        	URI pred1 = factory.createURI("http://isPartOf.com");
+        	Literal obj1 = factory.createLiteral("select ?x from...");
+        	connection.add(sub1,pred1, obj1);
         } catch (Exception e) {
         	e.printStackTrace();
             try {
@@ -51,7 +55,10 @@ public class SesameTest {
             } catch(RepositoryException re) {};
         }
         
-        RepositoryResult<Statement> statements = connection.getStatements(null, null, null, false);
+        ValueFactory factory = ValueFactoryImpl.getInstance();
+        URI context = factory.createURI("http://hi.com");
+        URI sub1 = factory.createURI("http://one.com");
+        RepositoryResult<Statement> statements = connection.getStatements(sub1, null, null, false);
      // iterate through triples and set triple token
         while (statements.hasNext()) {
             Statement statement = statements.next();
@@ -60,10 +67,10 @@ public class SesameTest {
             Element object = formElement(SPO.OBJECT, statement.getObject().toString());
             
             if(subject.getDataType() == DataType.URL) {
-            	System.out.println(subject+" top");
+            	System.out.println(subject+" "+predicate+" "+object);
             }
         }
-        
+        /*
         try {
       	  String queryString = "SELECT ?x ?y FROM <http://hi.com> WHERE { ?x ?p ?y } ";
       	  TupleQuery tupleQuery = connection.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
@@ -83,7 +90,7 @@ public class SesameTest {
       	  }
          } catch(Exception e) {
         	 System.err.println(e);
-         }
+         }*/
         connection.close();
 	}
 	

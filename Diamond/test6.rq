@@ -1,0 +1,5 @@
+select ?x ?y
+where {
+<http://dbpedia.org/resource/Austin,_Texas> <http://dbpedia.org/ontology/isPartOf> ?x.
+?y <http://dbpedia.org/property/subdivisionName> ?x .
+}

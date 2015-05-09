@@ -61,6 +61,7 @@ public class InputInternalFrame extends MyInternalFrame implements ActionListene
     JTabbedPane tabbedPane = new JTabbedPane();
 
     QueryProcessor queryProcessor = null;
+    Query query = null;
     LinkedDataManager linkedDataManager = null;
 
     int sizeX;
@@ -224,6 +225,7 @@ public class InputInternalFrame extends MyInternalFrame implements ActionListene
                 try {
 
                     queryProcessor = new FileQueryProcessor(qfile, debug);
+                    query = new Query(readFile(qfile.toString()));
 
                     @SuppressWarnings("resource")
                     BufferedReader input = new BufferedReader(new FileReader(qfile));
@@ -278,6 +280,7 @@ public class InputInternalFrame extends MyInternalFrame implements ActionListene
             System.out.println("Here:" + querySource);
 
             queryProcessor = new StringQueryProcessor(querySource, debug);
+            query = new Query(querySource);
 
             msg = "Query processing...";
             DMain.mFrame.showMessage(msg);
@@ -411,6 +414,23 @@ public class InputInternalFrame extends MyInternalFrame implements ActionListene
             DMain.gFrame.updateDraw(listOfReteNetwork);
         }
     }
+    
+    private String readFile(String file) throws IOException {
+		BufferedReader reader = new BufferedReader(new FileReader(file));
+	    String line = null;
+	    StringBuilder stringBuilder = new StringBuilder();
+	    String ls = System.getProperty("line.separator");
+		try {
+		    while((line = reader.readLine()) != null ) {
+		        stringBuilder.append( line );
+		        stringBuilder.append( ls );
+		    }
+		} finally {
+			reader.close();
+		}
+
+	    return stringBuilder.toString();
+	}
 
     // Worker Thread for the Query execution of Linked Data
     class QueryThread extends Thread {

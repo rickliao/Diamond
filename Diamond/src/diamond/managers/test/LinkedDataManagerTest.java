@@ -2,7 +2,10 @@ package diamond.managers.test;
 
 import static org.junit.Assert.*;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Scanner;
 
 import org.junit.Before;
@@ -11,6 +14,7 @@ import org.junit.Test;
 import diamond.managers.LinkedDataCache;
 import diamond.managers.LinkedDataManager;
 import diamond.managers.QueryStats;
+import diamond.managers.Query;
 import diamond.processors.FileQueryProcessor;
 import diamond.processors.QueryProcessor;
 
@@ -56,6 +60,23 @@ public class LinkedDataManagerTest {
         assertEquals(263, r1.getSolutionSet().size());
         assertEquals(114, r1.getDereferencedURLs());
         assertEquals(15217, r1.getNumTriples());
+	}
+	
+	private String readFile(String file) throws IOException {
+		BufferedReader reader = new BufferedReader(new FileReader(file));
+	    String line = null;
+	    StringBuilder stringBuilder = new StringBuilder();
+	    String ls = System.getProperty("line.separator");
+		try {
+		    while((line = reader.readLine()) != null ) {
+		        stringBuilder.append( line );
+		        stringBuilder.append( ls );
+		    }
+		} finally {
+			reader.close();
+		}
+
+	    return stringBuilder.toString();
 	}
 
 }
