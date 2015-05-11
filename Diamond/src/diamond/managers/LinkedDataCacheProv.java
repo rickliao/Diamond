@@ -43,7 +43,7 @@ public class LinkedDataCacheProv {
 	}
 	
 	public void addToCache(java.net.URI uri, String query, RDFTriple rdfTriple) {
-		//check if previously empty
+		//check if a "null" triple already exist, if yes remove
 		List<RDFTriple> triples = null;
 		try {
 			triples = dereference(uri, query);
@@ -53,9 +53,6 @@ public class LinkedDataCacheProv {
 		} catch (RepositoryException e1) {
 			e1.printStackTrace();
 		}
-		
-		//check if a "null" triple already exist, if yes remove
-		removeEmptyFromCache(uri, triples);
 		
 		//write the RDF triple to cache
 		Resource subject = factory.createURI(rdfTriple.getSubject().getData());
