@@ -242,18 +242,21 @@ public class LinkedDataManagerProv {
                 for(RDFFormat rdfFormat : RDFFormat.values()) {
                     if(!urlConnectionEstablished) {
                         try {
-                            rdfFormat = RDFFormat.N3;
+                            //rdfFormat = RDFFormat.N3;
                             urlConnection = url.toURL().openConnection();
                             urlConnection.setConnectTimeout(DEFAULT_TIMEOUT);
                             urlConnection.addRequestProperty("accept", rdfFormat.getDefaultMIMEType());
                             instream = urlConnection.getInputStream();
                             connection.add(instream, url.toString(), rdfFormat);
                             urlConnectionEstablished = true;
-                        } catch (Exception e) { // Ignore
+                        } catch (Exception e) {
+                        	System.err.println(e);// Ignore
                         } finally {
                             if(instream != null) try {
                                 instream.close();
-                            } catch (IOException e) {}
+                            } catch (IOException e) {
+                            	System.err.println(e);
+                            }
                             instream = null;
                         }
                     } else break;
