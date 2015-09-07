@@ -13,6 +13,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.openrdf.model.Statement;
 import org.openrdf.repository.Repository;
@@ -143,12 +145,16 @@ public class LinkedDataManagerProv {
                         boolean successfulDereference = false;
                         try {
                             if(verbose) System.out.println("Gathering data from URL: " + entry.getKey());
+                            
                             List<RDFTriple> extractedTriples = null;
                             
                             try {
-                            	extractedTriples = entry.getValue().get();
+                            	extractedTriples = entry.getValue().get(1, TimeUnit.MINUTES);
                             } catch(InterruptedException e) {
+                            	System.out.println("Interrupted: " + entry.getKey());
+                            } catch(TimeoutException e) {
                             	System.out.println("Timed-out connecting to URL: " + entry.getKey());
+                            	e.printStackTrace();
                             }
                             if(extractedTriples == null) {
                             	extractedTriples = new LinkedList<RDFTriple>();
@@ -183,8 +189,10 @@ public class LinkedDataManagerProv {
         timer.stop();
         
         SolutionSet solutionSet = reteNetwork.getSolutionSet();
-        System.out.println("\nSolutions: " + solutionSet.size() + "; Dereferened URLs: " +
+        if(verbose) {
+        	System.out.println("\nSolutions: " + solutionSet.size() + "; Dereferened URLs: " +
         		counter + "; Tripples: " + numTriples);
+        }
         if(hasTimer) System.out.println(timer.toString());
         QueryStats result = new QueryStats(solutionSet, counter, numTriples);
         return result;
@@ -239,6 +247,10 @@ public class LinkedDataManagerProv {
                 InputStream instream = null;
                 boolean urlConnectionEstablished = false;
                 
+                /*if(url.toString().equals("http://www.cs.man.ac.uk/~seanb/#me")) {
+                	System.out.println("asd");
+                }*/
+                
                 for(RDFFormat rdfFormat : RDFFormat.values()) {
                     if(!urlConnectionEstablished) {
                         try {
@@ -250,7 +262,7 @@ public class LinkedDataManagerProv {
                             connection.add(instream, url.toString(), rdfFormat);
                             urlConnectionEstablished = true;
                         } catch (Exception e) {
-                        	System.err.println(e);// Ignore
+                        	//System.err.println(e);// Ignore
                         } finally {
                             if(instream != null) try {
                                 instream.close();
