@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -113,22 +114,55 @@ public class LinkedDataManagerProv {
                     	boolean cacheHit = false;
                     	if(useCache) {
                     		List<RDFTriple> cachedTriples = cache.dereference(url, query);
-                    		//If already dereferenced the triple and returned nothing
+                    		//If already dereferenced the uri and returned one triple
                     		if(cachedTriples != null && cachedTriples.size() == 1) {
+                    			if(verbose) System.out.println("Cache hit for uri: " + url);
+                				if(verbose) System.out.println(cachedTriples.size() + " entries enqueued! Queue size: " + tokenQueue.size());
                     			RDFTriple triple = cachedTriples.get(0);
-                    			if(triple.getPredicate().getData().equals("http://null.null")) {
-                    				if(verbose) System.out.println("Cache hit for uri: " + url);
-                    				if(verbose) System.out.println(cachedTriples.size() + " entries enqueued! Queue size: " + tokenQueue.size());
-                    				cacheHitURLs.add(url);
-                    				cacheHit = true;
+                    			//if that triple is not null
+                    			if(!triple.getPredicate().getData().equals("http://null.null")) {
+                    				tokenQueue.addAll(cachedTriples, url);
                     			}
+                    			cacheHitURLs.add(url);
+                				cacheHit = true;
                     		} else if(cachedTriples != null) {
                     			if(verbose) System.out.println("Cache hit for uri: " + url);
                     			tokenQueue.addAll(cachedTriples, url);
                     			if(verbose) System.out.println(cachedTriples.size() + " entries enqueued! Queue size: " + tokenQueue.size());
                     			cacheHitURLs.add(url);
                     			cacheHit = true;
-                    		}
+                    			
+                    			// dereference the uri again to see if there are differences
+                    			Callable<List<RDFTriple>> derefURL = new DereferenceURL(url);
+                    			Future<List<RDFTriple>> futureExtracted = executor.submit(derefURL);
+                    			List<RDFTriple> extractedTriples = null;
+                    			try {
+                    				extractedTriples = futureExtracted.get(1, TimeUnit.MINUTES);
+	                    		} catch(InterruptedException e) {
+	                            	System.out.println("Interrupted: " + url);
+	                            } catch(TimeoutException e) {
+	                            	System.out.println("Timed-out connecting to URL: " + url);
+	                            	e.printStackTrace();
+	                            }
+                    			
+                    			// minus token
+                    			List<RDFTriple> temp = new ArrayList<RDFTriple>(cachedTriples);
+                    			cachedTriples.removeAll(extractedTriples);
+                    			if(verbose) System.out.println("Delete: " + cachedTriples);
+                    			// plus token
+                    			extractedTriples.removeAll(temp);
+                    			if(verbose) System.out.println("Add: " + extractedTriples);
+                    			//update cache
+                    			cache.updateCache(extractedTriples, cachedTriples, url, query);
+                    			
+                    			//insert into rete
+                    			for(RDFTriple triple: cachedTriples) {
+                    				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, url));
+                    			}
+                    			for(RDFTriple triple: extractedTriples) {
+                    				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, url));
+                    			}
+                    		}	
                     	}
 
                     	if(!cacheHit) {

@@ -1,6 +1,7 @@
 package diamond.main;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import org.openrdf.model.Literal;
 import org.openrdf.model.Statement;
@@ -41,13 +42,22 @@ public class SesameTest {
         	URI sub = factory.createURI("http://example.com");
         	URI pred = factory.createURI("http://example.com");
         	URI obj = factory.createURI("http://example.com");
-        	URI context = factory.createURI("http://hi.com");
+        	URI context = factory.createURI("http://musicbrainz.org/area/c6500277-9a3d-349b-bf30-41afdbf42add");
         	connection.add(sub, pred, obj, context);
         	
         	URI sub1 = factory.createURI("http://one.com");
         	URI pred1 = factory.createURI("http://isPartOf.com");
         	Literal obj1 = factory.createLiteral("select ?x from...");
         	connection.add(sub1,pred1, obj1);
+        	
+        	ArrayList<Integer> a = new ArrayList<Integer>();
+        	a.add(1);
+        	a.add(2);
+        	ArrayList<Integer> b = new ArrayList<Integer>();
+        	b.add(3);
+        	b.add(1);
+        	a.removeAll(b);
+        	System.out.println(a);
         } catch (Exception e) {
         	e.printStackTrace();
             try {
@@ -56,9 +66,9 @@ public class SesameTest {
         }
         
         ValueFactory factory = ValueFactoryImpl.getInstance();
-        URI context = factory.createURI("http://hi.com");
+        URI context = factory.createURI("http://musicbrainz.org/area/c6500277-9a3d-349b-bf30-41afdbf42add");
         URI sub1 = factory.createURI("http://one.com");
-        RepositoryResult<Statement> statements = connection.getStatements(sub1, null, null, false);
+        RepositoryResult<Statement> statements = connection.getStatements(null, null, null, false, context);
      // iterate through triples and set triple token
         while (statements.hasNext()) {
             Statement statement = statements.next();

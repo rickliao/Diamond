@@ -102,6 +102,34 @@ public class LinkedDataCacheProv {
 		}
 	}
 	
+	public void updateCache(List<RDFTriple> add, List<RDFTriple> remove, java.net.URI uri, String query) {
+		URI context = factory.createURI(uri.toString());
+		for(RDFTriple triple: add) {
+			Resource subject = factory.createURI(triple.getSubject().getData());
+			URI predicate = factory.createURI(triple.getPredicate().getData());
+			Literal object = factory.createLiteral(triple.getObject().getData());
+			try {
+				connection.add(subject, predicate, object, context);
+				//Distinguish which queries this query belongs to
+				addQueryConnection(uri, query);
+			} catch (RepositoryException e) {
+				e.printStackTrace();
+			} 
+		}
+		
+		for(RDFTriple triple: remove) {
+			Resource subject = factory.createURI(triple.getSubject().getData());
+			URI predicate = factory.createURI(triple.getPredicate().getData());
+			Literal object = factory.createLiteral(triple.getObject().getData());
+			try {
+				connection.remove(subject, predicate, object, context);
+				deleteQueryConnection(uri, query);
+			} catch (RepositoryException e) {
+				e.printStackTrace();
+			} 
+		}
+	}
+	
 	public List<RDFTriple> dereference(java.net.URI uri, String query) throws RepositoryException {
 		List<RDFTriple> triples = new ArrayList<RDFTriple>();
 		
@@ -153,6 +181,21 @@ public class LinkedDataCacheProv {
 			rs = connection.getStatements(subject, isPartOf, queryLiteral, false);
 			if(rs.hasNext() == false) {
 				connection.add(subject, isPartOf, queryLiteral);
+			}
+		} finally {
+			rs.close();
+		}
+	}
+	
+	private void deleteQueryConnection(java.net.URI uri, String query) throws RepositoryException {
+		URI subject = factory.createURI(uri.toString());
+		URI isPartOf = factory.createURI("http://dbpedia.org/ontology/isPartOf");
+		Literal queryLiteral = factory.createLiteral(query);
+		RepositoryResult<Statement> rs = null;
+		try {
+			rs = connection.getStatements(subject, isPartOf, queryLiteral, false);
+			if(rs.hasNext() == true) {
+				connection.remove(subject, isPartOf, queryLiteral);
 			}
 		} finally {
 			rs.close();

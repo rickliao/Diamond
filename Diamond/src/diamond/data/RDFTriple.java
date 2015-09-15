@@ -3,6 +3,8 @@
  */
 package diamond.data;
 
+import java.net.URI;
+
 /**
  * An RDFTriple that contains a subject, predicate, and object.
  */
@@ -85,6 +87,22 @@ public class RDFTriple implements Comparable<RDFTriple> {
         } else {
             this.predicate = predicate;
         }
+    }
+    
+    public TripleToken convertToTripleToken(boolean isPlus, URI origin) {
+        Binding binding = new Binding();
+        binding.setRDFTripleSubject(subject);
+        binding.setRDFTriplePredicate(predicate);
+        binding.setRDFTripleObject(object);
+        TripleToken tripleToken = null;
+        if (isPlus) {
+        	tripleToken = new TripleToken(TokenTag.PLUS, Timestamp.nextTimestamp());
+        } else {
+        	tripleToken = new TripleToken(TokenTag.MINUS, Timestamp.nextTimestamp());
+        }
+        tripleToken.addTriple(binding);
+        tripleToken.urlWhereTripleTokenCameFrom = origin;
+        return tripleToken;
     }
 
     /**
