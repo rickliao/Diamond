@@ -132,36 +132,7 @@ public class LinkedDataManagerProv {
                     			cacheHitURLs.add(url);
                     			cacheHit = true;
                     			
-                    			// dereference the uri again to see if there are differences
-                    			Callable<List<RDFTriple>> derefURL = new DereferenceURL(url);
-                    			Future<List<RDFTriple>> futureExtracted = executor.submit(derefURL);
-                    			List<RDFTriple> extractedTriples = null;
-                    			try {
-                    				extractedTriples = futureExtracted.get(1, TimeUnit.MINUTES);
-	                    		} catch(InterruptedException e) {
-	                            	System.out.println("Interrupted: " + url);
-	                            } catch(TimeoutException e) {
-	                            	System.out.println("Timed-out connecting to URL: " + url);
-	                            	e.printStackTrace();
-	                            }
-                    			
-                    			// minus token
-                    			List<RDFTriple> temp = new ArrayList<RDFTriple>(cachedTriples);
-                    			cachedTriples.removeAll(extractedTriples);
-                    			if(verbose) System.out.println("Delete: " + cachedTriples);
-                    			// plus token
-                    			extractedTriples.removeAll(temp);
-                    			if(verbose) System.out.println("Add: " + extractedTriples);
-                    			//update cache
-                    			cache.updateCache(extractedTriples, cachedTriples, url, query);
-                    			
-                    			//insert into rete
-                    			for(RDFTriple triple: cachedTriples) {
-                    				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, url));
-                    			}
-                    			for(RDFTriple triple: extractedTriples) {
-                    				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, url));
-                    			}
+                    			executor.submit(new UpdateCacheAndReteNetwork(reteNetwork, cache, query, url, cachedTriples, executor, verbose));
                     		}	
                     	}
 
@@ -251,6 +222,68 @@ public class LinkedDataManagerProv {
     }
     
     /**
+     * Callable for optimistic execution of cache: that is to deference an URI again and update cache
+     * and rete network
+     * 
+     * @author Rick Liao
+     */
+    private static class UpdateCacheAndReteNetwork implements Callable<Boolean> {
+    	private ReteNetwork reteNetwork;
+    	private URI uri;
+    	private List<RDFTriple> cachedTriples;
+    	private final ExecutorService executor;
+    	private boolean verbose;
+    	private LinkedDataCacheProv cache;
+    	private String query;
+    	
+    	public UpdateCacheAndReteNetwork(ReteNetwork reteNetwork, LinkedDataCacheProv cache, String query, URI uri, List<RDFTriple> cachedTriples, ExecutorService executor, boolean verbose) {
+    		this.reteNetwork = reteNetwork;
+    		this.cache = cache;
+    		this.query = query;
+    		this.uri = uri;
+    		this.cachedTriples = cachedTriples;
+    		this.executor = executor;
+    		this.verbose = verbose;
+    	}
+    	
+    	@Override
+    	public Boolean call() throws Exception {
+    		// dereference the uri again to see if there are differences
+			Callable<List<RDFTriple>> derefURL = new DereferenceURL(uri);
+			Future<List<RDFTriple>> futureExtracted = executor.submit(derefURL);
+			List<RDFTriple> extractedTriples = null;
+			try {
+				extractedTriples = futureExtracted.get(1, TimeUnit.MINUTES);
+    		} catch(InterruptedException e) {
+            	System.out.println("Interrupted: " + uri);
+            } catch(TimeoutException e) {
+            	System.out.println("Timed-out connecting to URL: " + uri);
+            	e.printStackTrace();
+            }
+			
+			// minus token
+			List<RDFTriple> temp = new ArrayList<RDFTriple>(cachedTriples);
+			cachedTriples.removeAll(extractedTriples);
+			if(verbose) System.out.println("Delete: " + cachedTriples);
+			// plus token
+			extractedTriples.removeAll(temp);
+			if(verbose) System.out.println("Add: " + extractedTriples);
+			//update cache
+			cache.updateCache(extractedTriples, cachedTriples, uri, query);
+			
+			//insert into rete
+			for(RDFTriple triple: cachedTriples) {
+				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, uri));
+			}
+			for(RDFTriple triple: extractedTriples) {
+				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
+			}
+			
+			return (cachedTriples.size()+extractedTriples.size()) == 0;
+    	}
+    }
+    
+    /**
      * Callable to Dereference URL and extract all RDF data. 
      * 
      * @author Slavcho Salvchev
@@ -280,10 +313,6 @@ public class LinkedDataManagerProv {
                 URLConnection urlConnection = null;
                 InputStream instream = null;
                 boolean urlConnectionEstablished = false;
-                
-                /*if(url.toString().equals("http://www.cs.man.ac.uk/~seanb/#me")) {
-                	System.out.println("asd");
-                }*/
                 
                 for(RDFFormat rdfFormat : RDFFormat.values()) {
                     if(!urlConnectionEstablished) {
