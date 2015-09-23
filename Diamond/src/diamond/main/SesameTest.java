@@ -37,6 +37,10 @@ public class SesameTest {
         repository.initialize();
         RepositoryConnection connection = repository.getConnection();
         
+        Repository repository1 = new SailRepository(new MemoryStore());
+        repository1.initialize();
+        RepositoryConnection connection1 = repository.getConnection();
+        
         try {
         	//connection.add(new File("cache.n3"), null, RDFFormat.N3);
         	ValueFactory factory = ValueFactoryImpl.getInstance();
@@ -52,11 +56,9 @@ public class SesameTest {
         	URI context1 = factory.createURI("http://context.com");
         	connection.add(sub1, pred1, obj1, context1);
         	
-        	BNodeImpl obj2 = new BNodeImpl("12345");
-        	URI pred2 = factory.createURI("http://predicate.com");
-        	URI sub2 = factory.createURI("http://subject.com");
-        	URI context2 = factory.createURI("http://context.com");
-        	connection.add(sub2, pred2, obj2, context2);
+        	connection1.add(sub, pred, obj, context);
+        	connection1.add(sub1, pred1, obj1, context1);
+        	System.out.println(connection.equals(connection1));
         	
         } catch (Exception e) {
         	e.printStackTrace();
@@ -82,6 +84,20 @@ public class SesameTest {
             	System.out.println(subject+" "+predicate+" "+object);
             //}
         }
+        
+        statements = connection1.getStatements(null, pred, obj, false, context);
+        // iterate through triples and set triple token
+           System.out.println(statements.hasNext());
+           while (statements.hasNext()) {
+               Statement statement = statements.next();
+               Element subject = formElement(SPO.SUBJECT, statement.getSubject().toString());
+               Element predicate = formElement(SPO.PREDICATE, statement.getPredicate().toString());
+               Element object = formElement(SPO.OBJECT, statement.getObject().toString());
+               
+               //if(subject.getDataType() == DataType.URL) {
+               	System.out.println(subject+" "+predicate+" "+object);
+               //}
+           }
         /*
         try {
       	  String queryString = "SELECT ?x ?y FROM <http://hi.com> WHERE { ?x ?p ?y } ";
