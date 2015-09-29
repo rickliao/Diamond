@@ -1,0 +1,13 @@
+prefix om-owl:<http://knoesis.wright.edu/ssw/ont/sensor-observation.owl#> 
+prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+prefix weather:<http://knoesis.wright.edu/ssw/ont/weather.owl#> 
+prefix sens-obs:<http://knoesis.wright.edu/ssw/> 
+prefix xsd:<http://www.w3.org/2001/XMLSchema#> 
+prefix owl-time:<http://www.w3.org/2006/time#>
+prefix weather:<http://purl.oclc.org/NET/ssnx/weather-station/station#>
+prefix dul:<http://www.loa-cnr.it/ontologies/DUL.owl#>
+
+SELECT ?x ?y
+WHERE { 
+	   ?x dul:hasPart ?y
+}

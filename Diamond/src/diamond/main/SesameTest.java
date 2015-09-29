@@ -8,6 +8,7 @@ import org.openrdf.model.Statement;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
+import org.openrdf.model.impl.BNodeImpl;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryLanguage;
@@ -36,28 +37,29 @@ public class SesameTest {
         repository.initialize();
         RepositoryConnection connection = repository.getConnection();
         
+        Repository repository1 = new SailRepository(new MemoryStore());
+        repository1.initialize();
+        RepositoryConnection connection1 = repository.getConnection();
+        
         try {
         	//connection.add(new File("cache.n3"), null, RDFFormat.N3);
         	ValueFactory factory = ValueFactoryImpl.getInstance();
-        	URI sub = factory.createURI("http://example.com");
-        	URI pred = factory.createURI("http://example.com");
-        	URI obj = factory.createURI("http://example.com");
-        	URI context = factory.createURI("http://musicbrainz.org/area/c6500277-9a3d-349b-bf30-41afdbf42add");
+        	BNodeImpl sub = new BNodeImpl("1234");
+        	URI pred = factory.createURI("http://predicate.com");
+        	URI obj = factory.createURI("http://object.com");
+        	URI context = factory.createURI("http://context.com");
         	connection.add(sub, pred, obj, context);
         	
-        	URI sub1 = factory.createURI("http://one.com");
-        	URI pred1 = factory.createURI("http://isPartOf.com");
-        	Literal obj1 = factory.createLiteral("select ?x from...");
-        	connection.add(sub1,pred1, obj1);
+        	BNodeImpl sub1 = new BNodeImpl("123");
+        	URI pred1 = factory.createURI("http://predicate.com");
+        	URI obj1 = factory.createURI("http://object.com");
+        	URI context1 = factory.createURI("http://context.com");
+        	connection.add(sub1, pred1, obj1, context1);
         	
-        	ArrayList<Integer> a = new ArrayList<Integer>();
-        	a.add(1);
-        	a.add(2);
-        	ArrayList<Integer> b = new ArrayList<Integer>();
-        	b.add(3);
-        	b.add(1);
-        	a.removeAll(b);
-        	System.out.println(a);
+        	connection1.add(sub, pred, obj, context);
+        	connection1.add(sub1, pred1, obj1, context1);
+        	System.out.println(connection.equals(connection1));
+        	
         } catch (Exception e) {
         	e.printStackTrace();
             try {
@@ -66,20 +68,36 @@ public class SesameTest {
         }
         
         ValueFactory factory = ValueFactoryImpl.getInstance();
-        URI context = factory.createURI("http://musicbrainz.org/area/c6500277-9a3d-349b-bf30-41afdbf42add");
-        URI sub1 = factory.createURI("http://one.com");
-        RepositoryResult<Statement> statements = connection.getStatements(null, null, null, false, context);
+        URI context = factory.createURI("http://context.com");
+        URI pred = factory.createURI("http://predicate.com");
+    	URI obj = factory.createURI("http://object.com");
+        RepositoryResult<Statement> statements = connection.getStatements(null, pred, obj, false, context);
      // iterate through triples and set triple token
+        System.out.println(statements.hasNext());
         while (statements.hasNext()) {
             Statement statement = statements.next();
             Element subject = formElement(SPO.SUBJECT, statement.getSubject().toString());
             Element predicate = formElement(SPO.PREDICATE, statement.getPredicate().toString());
             Element object = formElement(SPO.OBJECT, statement.getObject().toString());
             
-            if(subject.getDataType() == DataType.URL) {
+            //if(subject.getDataType() == DataType.URL) {
             	System.out.println(subject+" "+predicate+" "+object);
-            }
+            //}
         }
+        
+        statements = connection1.getStatements(null, pred, obj, false, context);
+        // iterate through triples and set triple token
+           System.out.println(statements.hasNext());
+           while (statements.hasNext()) {
+               Statement statement = statements.next();
+               Element subject = formElement(SPO.SUBJECT, statement.getSubject().toString());
+               Element predicate = formElement(SPO.PREDICATE, statement.getPredicate().toString());
+               Element object = formElement(SPO.OBJECT, statement.getObject().toString());
+               
+               //if(subject.getDataType() == DataType.URL) {
+               	System.out.println(subject+" "+predicate+" "+object);
+               //}
+           }
         /*
         try {
       	  String queryString = "SELECT ?x ?y FROM <http://hi.com> WHERE { ?x ?p ?y } ";
