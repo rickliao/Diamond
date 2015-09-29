@@ -56,6 +56,7 @@ public class LinkedDataManagerProv {
     private final URLManager urlManager;
     private final ExecutorService executor;
     private String query;
+    public String result;
 
     /**
      * Create System Manager to manage transactions of the entire Diamond system
@@ -85,6 +86,7 @@ public class LinkedDataManagerProv {
         int counter = 0, numTriples = 0;
         boolean useCache = (myCache != null);
         LinkedDataCacheProv cache = useCache ? myCache : null;
+        ArrayList<URI> reDereference = new ArrayList<URI>();
         
         if(useCache && verbose) System.out.println("Cached data for " + cache.size() + " URLs");
         
@@ -122,9 +124,12 @@ public class LinkedDataManagerProv {
                     			//if that triple is not null
                     			if(!triple.getPredicate().getData().equals("http://null.null")) {
                     				tokenQueue.addAll(cachedTriples, url);
+                    				//executor.submit(new UpdateCacheAndReteNetwork(reteNetwork, cache, query, url, cachedTriples, executor, verbose));
                     			}
                     			cacheHitURLs.add(url);
                 				cacheHit = true;
+                				reDereference.add(url);
+                				
                     		} else if(cachedTriples != null) {
                     			if(verbose) System.out.println("Cache hit for uri: " + url);
                     			tokenQueue.addAll(cachedTriples, url);
@@ -132,7 +137,8 @@ public class LinkedDataManagerProv {
                     			cacheHitURLs.add(url);
                     			cacheHit = true;
                     			
-                    			executor.submit(new UpdateCacheAndReteNetwork(reteNetwork, cache, query, url, cachedTriples, executor, verbose));
+                    			//executor.submit(new UpdateCacheAndReteNetwork(reteNetwork, cache, query, url, cachedTriples, executor, verbose));
+                    			reDereference.add(url);
                     		}	
                     	}
 
@@ -200,6 +206,42 @@ public class LinkedDataManagerProv {
         }
         if(hasTimer) System.out.println(timer.toString());
         QueryStats result = new QueryStats(solutionSet, counter, numTriples);
+        
+        for(int i = 0; i < reDereference.size(); i++) {
+        	URI uri = reDereference.get(i);
+        	List<RDFTriple> cachedTriples = cache.dereference(uri, query);
+        	
+	        if (verbose) System.out.println(uri);
+			// dereference the uri again to see if there are differences
+			Callable<List<RDFTriple>> derefURL = new DereferenceURL(uri);
+			Future<List<RDFTriple>> futureExtracted = executor.submit(derefURL);
+			List<RDFTriple> extractedTriples = null;
+			try {
+				extractedTriples = futureExtracted.get();
+			} catch(InterruptedException e) {
+	        	System.out.println("Interrupted: " + uri);
+	        }
+			
+			// minus token
+			List<RDFTriple> temp = new ArrayList<RDFTriple>(cachedTriples);
+			cachedTriples.removeAll(extractedTriples);
+			if(verbose) System.out.println("Delete: " + cachedTriples);
+			// plus token
+			extractedTriples.removeAll(temp);
+			if(verbose) System.out.println("Add: " + extractedTriples);
+			//update cache
+			cache.updateCache(extractedTriples, cachedTriples, uri, query);
+			
+			//insert into rete
+			for(RDFTriple triple: cachedTriples) {
+				if(!triple.getPredicate().getData().equals("http://null.null")) {
+					reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, uri));
+				}
+			}
+			for(RDFTriple triple: extractedTriples) {
+				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
+			}
+        }
         return result;
     }
     
@@ -248,17 +290,15 @@ public class LinkedDataManagerProv {
     	
     	@Override
     	public Boolean call() throws Exception {
+    		if (verbose) System.out.println(uri);
     		// dereference the uri again to see if there are differences
 			Callable<List<RDFTriple>> derefURL = new DereferenceURL(uri);
 			Future<List<RDFTriple>> futureExtracted = executor.submit(derefURL);
 			List<RDFTriple> extractedTriples = null;
 			try {
-				extractedTriples = futureExtracted.get(1, TimeUnit.MINUTES);
+				extractedTriples = futureExtracted.get();
     		} catch(InterruptedException e) {
             	System.out.println("Interrupted: " + uri);
-            } catch(TimeoutException e) {
-            	System.out.println("Timed-out connecting to URL: " + uri);
-            	e.printStackTrace();
             }
 			
 			// minus token
@@ -276,7 +316,9 @@ public class LinkedDataManagerProv {
 				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, uri));
 			}
 			for(RDFTriple triple: extractedTriples) {
-				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
+				if(!triple.getPredicate().getData().equals("http://null.null")) {
+					reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
+				}
 			}
 			
 			return (cachedTriples.size()+extractedTriples.size()) == 0;

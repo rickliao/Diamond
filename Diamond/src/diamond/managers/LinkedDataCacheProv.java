@@ -122,8 +122,10 @@ public class LinkedDataCacheProv {
 			URI predicate = factory.createURI(triple.getPredicate().getData());
 			Literal object = factory.createLiteral(triple.getObject().getData());
 			try {
-				connection.remove(subject, predicate, object, context);
-				deleteQueryConnection(uri, query);
+				if(!predicate.toString().equals("http://null.null")) {
+					connection.remove(subject, predicate, object, context);
+					deleteQueryConnection(uri, query);
+				}
 			} catch (RepositoryException e) {
 				e.printStackTrace();
 			} 
