@@ -138,6 +138,15 @@ public class RDFTriple implements Comparable<RDFTriple> {
     public String toString() {
         return "(" + getSubject() + ", " + getPredicate() + ", " + getObject() + ")";
     }
+    
+    /**
+     * Return true if the triple contains a blank node
+     * 
+     * @return boolean
+     */
+    public boolean containsBlankNode() {
+    	return DataType.isBlankNode(getSubject().toString()) || DataType.isBlankNode(getObject().toString());
+    }
 
     /**
      * Overridden equals method.

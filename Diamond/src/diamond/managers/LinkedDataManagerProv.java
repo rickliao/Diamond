@@ -5,12 +5,14 @@ import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -207,7 +209,21 @@ public class LinkedDataManagerProv {
         if(hasTimer) System.out.println(timer.toString());
         QueryStats result = new QueryStats(solutionSet, counter, numTriples);
         
-        for(int i = 0; i < reDereference.size(); i++) {
+        runOptimisticExecution(reDereference, cache, verbose);
+        
+        return result;
+    }
+    
+    /**
+     * Run optimistic execution. Dereference URIs again, check differences from cache, update cache and rete
+     * 
+     * @param reDereference list of URIs to dereference again
+     * @param cache 
+     * @param verbose
+     * @throws Exception
+     */
+    public void runOptimisticExecution(List<URI> reDereference, LinkedDataCacheProv cache, boolean verbose) throws Exception {
+    	for(int i = 0; i < reDereference.size(); i++) {
         	URI uri = reDereference.get(i);
         	List<RDFTriple> cachedTriples = cache.dereference(uri, query);
         	
@@ -220,29 +236,60 @@ public class LinkedDataManagerProv {
 				extractedTriples = futureExtracted.get();
 			} catch(InterruptedException e) {
 	        	System.out.println("Interrupted: " + uri);
+	        } catch(ExecutionException e) {
+	        	e.printStackTrace();
 	        }
 			
+			//Separate blank nodes from normal nodes
+			List<List<RDFTriple>> cached = separateNodes(cachedTriples);
+			List<RDFTriple> cachedNotBlank = cached.get(0);
+			List<RDFTriple> cachedBlank = cached.get(1);
+			
+			List<List<RDFTriple>> extracted = separateNodes(extractedTriples);
+			List<RDFTriple> extractedNotBlank = extracted.get(0);
+			List<RDFTriple> extractedBlank = extracted.get(1);
+			
+			//Calculate difference for non-blank triples
 			// minus token
-			List<RDFTriple> temp = new ArrayList<RDFTriple>(cachedTriples);
-			cachedTriples.removeAll(extractedTriples);
-			if(verbose) System.out.println("Delete: " + cachedTriples);
+			List<RDFTriple> temp = new ArrayList<RDFTriple>(cachedNotBlank);
+			cachedNotBlank.removeAll(extractedNotBlank);
+			if(verbose) System.out.println("Delete: " + cachedNotBlank);
 			// plus token
-			extractedTriples.removeAll(temp);
-			if(verbose) System.out.println("Add: " + extractedTriples);
+			extractedNotBlank.removeAll(temp);
+			if(verbose) System.out.println("Add: " + extractedNotBlank);
+			
 			//update cache
-			cache.updateCache(extractedTriples, cachedTriples, uri, query);
+			cache.updateCache(extractedNotBlank, cachedNotBlank, uri, query);
 			
 			//insert into rete
-			for(RDFTriple triple: cachedTriples) {
+			for(RDFTriple triple: cachedNotBlank) {
 				if(!triple.getPredicate().getData().equals("http://null.null")) {
 					reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, uri));
 				}
 			}
-			for(RDFTriple triple: extractedTriples) {
+			for(RDFTriple triple: extractedNotBlank) {
 				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
 			}
         }
-        return result;
+    }
+    
+    /**
+     * Separate list of triples into list of triples containing blank nodes and list without blank nodes
+     * 
+     * @param list
+     * @return list of size 2. Index 0: list of non-blank triples Index 1: list of blank triples
+     */
+    public List<List<RDFTriple>> separateNodes(List<RDFTriple> list) {
+    	List<RDFTriple> blank = new ArrayList<RDFTriple>();
+    	List<RDFTriple> notBlank = new ArrayList<RDFTriple>();
+    	for(RDFTriple triple: list) {
+    		if(triple.containsBlankNode()) {
+    			blank.add(triple);
+    		} else {
+    			notBlank.add(triple);
+    		}
+    	}
+    	return Arrays.asList(notBlank, blank);
     }
     
     /**
