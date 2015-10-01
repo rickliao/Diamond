@@ -274,6 +274,75 @@ public class LinkedDataManagerProv {
     }
     
     /**
+     * Calculate difference of two sets of triples with blank nodes
+     * 
+     * @param cachedBlank
+     * @param extractedBlank
+     * @return Index 0: token to be removed, Index 1: token to be inserted
+     */
+    public List<List<RDFTriple>> calculateBlankDifference(List<RDFTriple> cachedBlank, List<RDFTriple> extractedBlank) {
+    	//make blank nodes into subgraphs
+    	Map<Element, List<RDFTriple>> cachedSubgraphs = new HashMap<Element, List<RDFTriple>>();
+    	for(RDFTriple triple: cachedBlank) {
+    		//get blank node
+    		Element blankName;
+    		if(DataType.isBlankNode(triple.getSubject().toString())) {
+    			blankName = triple.getSubject();
+    		} else {
+    			blankName = triple.getObject();
+    		}
+    		//insert into map
+    		if(cachedSubgraphs.get(blankName) == null) {
+    			List<RDFTriple> curTriple = new ArrayList<RDFTriple>();
+    			curTriple.add(triple);
+    			cachedSubgraphs.put(blankName, curTriple);
+    		} else {
+    			cachedSubgraphs.get(blankName).add(triple);
+    		}
+    	}
+    	
+    	Map<RDFTriple, Boolean> extractedMatched = new HashMap<RDFTriple, Boolean>();
+    	Map<Element, Boolean> cachedMatched = new HashMap<Element, Boolean>();
+    	List<RDFTriple> minus = new ArrayList<RDFTriple>();
+    	List<RDFTriple> plus = new ArrayList<RDFTriple>();
+    	for(RDFTriple triple: extractedBlank) {
+    		if(DataType.isBlankNode(triple.getSubject().toString())) {
+    			Element pred = triple.getPredicate();
+    			Element obj = triple.getObject();
+    			for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
+    				if(cachedMatched.get(entry.getKey()) == null) {
+	    			    List<RDFTriple> subgraph = entry.getValue();
+	    			    for(RDFTriple node: subgraph) {
+	    			    	if(node.getPredicate().equals(pred) && node.getObject().equals(obj)) {
+	    			    		subgraph.remove(node);
+	    			    		minus.addAll(subgraph);
+	    			    		extractedMatched.put(triple, true);
+	    			    		cachedMatched.put(entry.getKey(), true);
+	    			    	}
+	    			    }
+    				}
+    			}
+    		} else {
+    			Element pred = triple.getPredicate();
+    			Element sub = triple.getSubject();
+    			for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
+    				if(cachedMatched.get(entry.getKey()) == null) {
+	    			    List<RDFTriple> subgraph = entry.getValue();
+	    			    for(RDFTriple node: subgraph) {
+	    			    	if(node.getPredicate().equals(pred) && node.getSubject().equals(sub)) {
+	    			    		subgraph.remove(node);
+	    			    		minus.addAll(subgraph);
+	    			    		extractedMatched.put(triple, true);
+	    			    		cachedMatched.put(entry.getKey(), true);
+	    			    	}
+	    			    }
+    				}
+    			}
+    		}
+    	}
+    }
+    
+    /**
      * Separate list of triples into list of triples containing blank nodes and list without blank nodes
      * 
      * @param list
