@@ -249,17 +249,13 @@ public class LinkedDataManagerProv {
 			List<RDFTriple> extractedNotBlank = extracted.get(0);
 			List<RDFTriple> extractedBlank = extracted.get(1);
 			
-			//Calculate difference for non-blank triples
 			// minus token
 			List<RDFTriple> temp = new ArrayList<RDFTriple>(cachedNotBlank);
 			cachedNotBlank.removeAll(extractedNotBlank);
-			if(verbose) System.out.println("Delete: " + cachedNotBlank);
+			if(verbose) System.out.println("Delete non-blank: " + cachedNotBlank);
 			// plus token
 			extractedNotBlank.removeAll(temp);
-			if(verbose) System.out.println("Add: " + extractedNotBlank);
-			
-			//update cache
-			cache.updateCache(extractedNotBlank, cachedNotBlank, uri, query);
+			if(verbose) System.out.println("Add non-blank: " + extractedNotBlank);
 			
 			//insert into rete
 			for(RDFTriple triple: cachedNotBlank) {
@@ -268,6 +264,23 @@ public class LinkedDataManagerProv {
 				}
 			}
 			for(RDFTriple triple: extractedNotBlank) {
+				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
+			}
+			
+			//Calculate difference for non-blank triples
+			List<List<RDFTriple>> diff = calculateBlankDifference(cachedBlank, extractedBlank);
+			if(verbose) System.out.println("Delete blank: " + diff.get(0));
+			if(verbose) System.out.println("Add blank: " + diff.get(1));
+			
+			//update cache
+			cache.updateCache(extractedNotBlank, cachedNotBlank, uri, query);
+			cache.updateCache(diff.get(1), diff.get(0), uri, query);
+			
+			//insert into rete
+			for(RDFTriple triple: diff.get(0)) {
+				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, uri));
+			}
+			for(RDFTriple triple: diff.get(1)) {
 				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
 			}
         }
@@ -301,6 +314,7 @@ public class LinkedDataManagerProv {
     		}
     	}
     	
+    	//Create match between extracted and subgraph
     	Map<RDFTriple, Boolean> extractedMatched = new HashMap<RDFTriple, Boolean>();
     	Map<Element, Boolean> cachedMatched = new HashMap<Element, Boolean>();
     	List<RDFTriple> minus = new ArrayList<RDFTriple>();
@@ -311,14 +325,21 @@ public class LinkedDataManagerProv {
     			Element obj = triple.getObject();
     			for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
     				if(cachedMatched.get(entry.getKey()) == null) {
-	    			    List<RDFTriple> subgraph = entry.getValue();
+    					List<RDFTriple> subgraph = entry.getValue();
+	    			    RDFTriple target = null;
+	    			    boolean found = false;
 	    			    for(RDFTriple node: subgraph) {
 	    			    	if(node.getPredicate().equals(pred) && node.getObject().equals(obj)) {
-	    			    		subgraph.remove(node);
-	    			    		minus.addAll(subgraph);
-	    			    		extractedMatched.put(triple, true);
-	    			    		cachedMatched.put(entry.getKey(), true);
+	    			    		target = node;
+	    			    		found = true;
+	    			    		break;
 	    			    	}
+	    			    }
+	    			    if(found) {
+		    			    subgraph.remove(target);
+				    		minus.addAll(subgraph);
+				    		extractedMatched.put(triple, true);
+				    		cachedMatched.put(entry.getKey(), true);
 	    			    }
     				}
     			}
@@ -328,18 +349,39 @@ public class LinkedDataManagerProv {
     			for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
     				if(cachedMatched.get(entry.getKey()) == null) {
 	    			    List<RDFTriple> subgraph = entry.getValue();
+	    			    RDFTriple target = null;
+	    			    boolean found = false;
 	    			    for(RDFTriple node: subgraph) {
 	    			    	if(node.getPredicate().equals(pred) && node.getSubject().equals(sub)) {
-	    			    		subgraph.remove(node);
-	    			    		minus.addAll(subgraph);
-	    			    		extractedMatched.put(triple, true);
-	    			    		cachedMatched.put(entry.getKey(), true);
+	    			    		target = node;
+	    			    		found = true;
+	    			    		break;
 	    			    	}
+	    			    }
+	    			    if(found) {
+		    			    subgraph.remove(target);
+				    		minus.addAll(subgraph);
+				    		extractedMatched.put(triple, true);
+				    		cachedMatched.put(entry.getKey(), true);
 	    			    }
     				}
     			}
     		}
     	}
+    	
+    	//Add left overs to minus or plus
+    	for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
+    		if(cachedMatched.get(entry.getKey()) == null) {
+    			minus.addAll(entry.getValue());
+    		}
+    	}
+    	for(RDFTriple triple: extractedBlank) {
+    		if(extractedMatched.get(triple) == null) {
+    			plus.add(triple);
+    		}
+    	}
+    	
+    	return Arrays.asList(minus, plus);
     }
     
     /**
