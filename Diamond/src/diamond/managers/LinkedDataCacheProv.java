@@ -158,10 +158,8 @@ public class LinkedDataCacheProv {
                 Element subject = formElement(SPO.SUBJECT, statement.getSubject().toString());
                 Element predicate = formElement(SPO.PREDICATE, statement.getPredicate().toString());
                 Element object = formElement(SPO.OBJECT, statement.getObject().stringValue());
-                if(subject.getDataType() == DataType.URL) {
-                	RDFTriple triple = new RDFTriple(subject, predicate, object);
-                	triples.add(triple);
-                }
+                RDFTriple triple = new RDFTriple(subject, predicate, object);
+                triples.add(triple);
             }
          } finally{
         	 rs.close();

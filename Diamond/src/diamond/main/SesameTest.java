@@ -2,10 +2,18 @@ package diamond.main;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.openrdf.model.Literal;
+import org.openrdf.model.Resource;
 import org.openrdf.model.Statement;
-import org.openrdf.model.URI;
+//import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.BNodeImpl;
@@ -29,10 +37,24 @@ import diamond.data.DataType;
 import diamond.data.Element;
 import diamond.data.RDFTriple;
 import diamond.data.SPO;
+import diamond.managers.LinkedDataManagerProv;
 
 public class SesameTest {
     
-	public static void main(String[] args) throws RepositoryException {
+	public static void main(String[] args) throws RepositoryException, URISyntaxException {
+		LinkedDataManagerProv.DereferenceURL d = new LinkedDataManagerProv.DereferenceURL(new URI("http://data.semanticweb.org/conference/iswc/2008/paper/poster_demo/33"));
+		ExecutorService executor = Executors.newFixedThreadPool(16);
+		Future<List<RDFTriple>> f = executor.submit(d);
+		try {
+			System.out.println(f.get());
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		/*
 		Repository repository = new SailRepository(new MemoryStore());
         repository.initialize();
         RepositoryConnection connection = repository.getConnection();
@@ -44,21 +66,17 @@ public class SesameTest {
         try {
         	//connection.add(new File("cache.n3"), null, RDFFormat.N3);
         	ValueFactory factory = ValueFactoryImpl.getInstance();
-        	BNodeImpl sub = new BNodeImpl("1234");
-        	URI pred = factory.createURI("http://predicate.com");
-        	URI obj = factory.createURI("http://object.com");
+        	Resource  subject= factory.createURI("_:nodeaaa32423423");
+    		URI predicate = factory.createURI("http://pred.com");
+    		Literal object = factory.createLiteral("http://obj.com");
         	URI context = factory.createURI("http://context.com");
-        	connection.add(sub, pred, obj, context);
+        	connection.add(subject, predicate, object, context);
         	
         	BNodeImpl sub1 = new BNodeImpl("123");
         	URI pred1 = factory.createURI("http://predicate.com");
         	URI obj1 = factory.createURI("http://object.com");
         	URI context1 = factory.createURI("http://context.com");
         	connection.add(sub1, pred1, obj1, context1);
-        	
-        	connection1.add(sub, pred, obj, context);
-        	connection1.add(sub1, pred1, obj1, context1);
-        	System.out.println(connection.equals(connection1));
         	
         } catch (Exception e) {
         	e.printStackTrace();
@@ -71,9 +89,8 @@ public class SesameTest {
         URI context = factory.createURI("http://context.com");
         URI pred = factory.createURI("http://predicate.com");
     	URI obj = factory.createURI("http://object.com");
-        RepositoryResult<Statement> statements = connection.getStatements(null, pred, obj, false, context);
+        RepositoryResult<Statement> statements = connection.getStatements(null, null, null, false, context);
      // iterate through triples and set triple token
-        System.out.println(statements.hasNext());
         while (statements.hasNext()) {
             Statement statement = statements.next();
             Element subject = formElement(SPO.SUBJECT, statement.getSubject().toString());
@@ -85,41 +102,7 @@ public class SesameTest {
             //}
         }
         
-        statements = connection1.getStatements(null, pred, obj, false, context);
-        // iterate through triples and set triple token
-           System.out.println(statements.hasNext());
-           while (statements.hasNext()) {
-               Statement statement = statements.next();
-               Element subject = formElement(SPO.SUBJECT, statement.getSubject().toString());
-               Element predicate = formElement(SPO.PREDICATE, statement.getPredicate().toString());
-               Element object = formElement(SPO.OBJECT, statement.getObject().toString());
-               
-               //if(subject.getDataType() == DataType.URL) {
-               	System.out.println(subject+" "+predicate+" "+object);
-               //}
-           }
-        /*
-        try {
-      	  String queryString = "SELECT ?x ?y FROM <http://hi.com> WHERE { ?x ?p ?y } ";
-      	  TupleQuery tupleQuery = connection.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
-
-      	  TupleQueryResult result = tupleQuery.evaluate();
-      	  try {
-                while (result.hasNext()) {  // iterate over the result
-	      			BindingSet bindingSet = result.next();
-	      			Value valueOfX = bindingSet.getValue("x");
-	      			Value valueOfY = bindingSet.getValue("y");
-	
-	      			System.out.println(valueOfX+" "+valueOfY);
-                }
-      	  }
-      	  finally {
-      	      result.close();
-      	  }
-         } catch(Exception e) {
-        	 System.err.println(e);
-         }*/
-        connection.close();
+        connection.close();*/
 	}
 	
 	private static Element formElement(SPO spo, String data) {

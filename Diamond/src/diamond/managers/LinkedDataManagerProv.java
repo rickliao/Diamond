@@ -182,6 +182,7 @@ public class LinkedDataManagerProv {
                             
                             if(verbose) System.out.println("Extracted " + extractedTriples.size()  + " triples from URL: " + entry.getKey());
                             tokenQueue.addAll(extractedTriples, entry.getKey());
+                            
                             //write to cache
                             for(RDFTriple triple:extractedTriples) {
                             	cache.addToCache(entry.getKey(), query, triple);
@@ -241,6 +242,9 @@ public class LinkedDataManagerProv {
 	        }
 			
 			//Separate blank nodes from normal nodes
+			if(uri.toString().equals("http://data.semanticweb.org/person/kay-uwe-schmidt")) {
+				System.out.println("asdas");
+			}
 			List<List<RDFTriple>> cached = separateNodes(cachedTriples);
 			List<RDFTriple> cachedNotBlank = cached.get(0);
 			List<RDFTriple> cachedBlank = cached.get(1);
@@ -267,7 +271,7 @@ public class LinkedDataManagerProv {
 				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
 			}
 			
-			//Calculate difference for non-blank triples
+			//Calculate difference blank triples
 			List<List<RDFTriple>> diff = calculateBlankDifference(cachedBlank, extractedBlank);
 			if(verbose) System.out.println("Delete blank: " + diff.get(0));
 			if(verbose) System.out.println("Add blank: " + diff.get(1));
@@ -340,6 +344,7 @@ public class LinkedDataManagerProv {
 				    		minus.addAll(subgraph);
 				    		extractedMatched.put(triple, true);
 				    		cachedMatched.put(entry.getKey(), true);
+				    		break;
 	    			    }
     				}
     			}
@@ -363,6 +368,7 @@ public class LinkedDataManagerProv {
 				    		minus.addAll(subgraph);
 				    		extractedMatched.put(triple, true);
 				    		cachedMatched.put(entry.getKey(), true);
+				    		break;
 	    			    }
     				}
     			}
@@ -488,7 +494,7 @@ public class LinkedDataManagerProv {
      * 
      * @author Slavcho Salvchev
      */
-    private static class DereferenceURL implements Callable<List<RDFTriple>> {
+    public static class DereferenceURL implements Callable<List<RDFTriple>> {
 
         private final URI url;
         private static int DEFAULT_TIMEOUT = 10000;
