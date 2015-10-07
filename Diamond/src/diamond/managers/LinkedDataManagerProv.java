@@ -299,79 +299,68 @@ public class LinkedDataManagerProv {
      */
     public List<List<RDFTriple>> calculateBlankDifference(List<RDFTriple> cachedBlank, List<RDFTriple> extractedBlank) {
     	//make blank nodes into subgraphs
-    	Map<Element, List<RDFTriple>> cachedSubgraphs = new HashMap<Element, List<RDFTriple>>();
-    	for(RDFTriple triple: cachedBlank) {
-    		//get blank node
-    		Element blankName;
-    		if(DataType.isBlankNode(triple.getSubject().toString())) {
-    			blankName = triple.getSubject();
-    		} else {
-    			blankName = triple.getObject();
-    		}
-    		//insert into map
-    		if(cachedSubgraphs.get(blankName) == null) {
-    			List<RDFTriple> curTriple = new ArrayList<RDFTriple>();
-    			curTriple.add(triple);
-    			cachedSubgraphs.put(blankName, curTriple);
-    		} else {
-    			cachedSubgraphs.get(blankName).add(triple);
-    		}
-    	}
+    	Map<Element, List<RDFTriple>> cachedSubgraphs = groupNodes(cachedBlank);
+    	Map<Element, List<RDFTriple>> extractedSubgraphs = groupNodes(extractedBlank);
     	
     	//Create match between extracted and subgraph
     	Map<RDFTriple, Boolean> extractedMatched = new HashMap<RDFTriple, Boolean>();
     	Map<Element, Boolean> cachedMatched = new HashMap<Element, Boolean>();
     	List<RDFTriple> minus = new ArrayList<RDFTriple>();
     	List<RDFTriple> plus = new ArrayList<RDFTriple>();
-    	for(RDFTriple triple: extractedBlank) {
-    		if(DataType.isBlankNode(triple.getSubject().toString())) {
-    			Element pred = triple.getPredicate();
-    			Element obj = triple.getObject();
-    			for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
-    				if(cachedMatched.get(entry.getKey()) == null) {
-    					List<RDFTriple> subgraph = entry.getValue();
-	    			    RDFTriple target = null;
-	    			    boolean found = false;
-	    			    for(RDFTriple node: subgraph) {
-	    			    	if(node.getPredicate().equals(pred) && node.getObject().equals(obj)) {
-	    			    		target = node;
-	    			    		found = true;
-	    			    		break;
-	    			    	}
-	    			    }
-	    			    if(found) {
-		    			    subgraph.remove(target);
-				    		minus.addAll(subgraph);
-				    		extractedMatched.put(triple, true);
-				    		cachedMatched.put(entry.getKey(), true);
-				    		break;
-	    			    }
-    				}
-    			}
-    		} else {
-    			Element pred = triple.getPredicate();
-    			Element sub = triple.getSubject();
-    			for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
-    				if(cachedMatched.get(entry.getKey()) == null) {
-	    			    List<RDFTriple> subgraph = entry.getValue();
-	    			    RDFTriple target = null;
-	    			    boolean found = false;
-	    			    for(RDFTriple node: subgraph) {
-	    			    	if(node.getPredicate().equals(pred) && node.getSubject().equals(sub)) {
-	    			    		target = node;
-	    			    		found = true;
-	    			    		break;
-	    			    	}
-	    			    }
-	    			    if(found) {
-		    			    subgraph.remove(target);
-				    		minus.addAll(subgraph);
-				    		extractedMatched.put(triple, true);
-				    		cachedMatched.put(entry.getKey(), true);
-				    		break;
-	    			    }
-    				}
-    			}
+    	for(Map.Entry<Element, List<RDFTriple>> entryExt : extractedSubgraphs.entrySet()) {
+    		List<RDFTriple> subgraphExt = entryExt.getValue();
+    		List<RDFTriple> same = new ArrayList<RDFTriple>();
+    		for(RDFTriple triple: subgraphExt) {
+	    		if(DataType.isBlankNode(triple.getSubject().toString())) {
+	    			Element pred = triple.getPredicate();
+	    			Element obj = triple.getObject();
+	    			for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
+	    				if(cachedMatched.get(entry.getKey()) == null) {
+	    					List<RDFTriple> subgraph = entry.getValue();
+	    					RDFTriple target = null;
+		    			    boolean found = false;
+		    			    for(RDFTriple node: subgraph) {
+		    			    	if(node.getPredicate().equals(pred) && node.getObject().equals(obj)) {
+		    			    		target = node;
+		    			    		found = true;
+		    			    		break;
+		    			    	}
+		    			    }
+		    			    if(found) {
+			    			    subgraph.remove(target);
+					    		minus.addAll(subgraph);
+					    		extractedMatched.put(triple, true);
+					    		cachedMatched.put(entry.getKey(), true);
+					    		same.add(triple);
+					    		break;
+		    			    }
+	    				}
+	    			}
+	    		} else {
+	    			Element pred = triple.getPredicate();
+	    			Element sub = triple.getSubject();
+	    			for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
+	    				if(cachedMatched.get(entry.getKey()) == null) {
+		    			    List<RDFTriple> subgraph = entry.getValue();
+		    			    RDFTriple target = null;
+		    			    boolean found = false;
+		    			    for(RDFTriple node: subgraph) {
+		    			    	if(node.getPredicate().equals(pred) && node.getSubject().equals(sub)) {
+		    			    		target = node;
+		    			    		found = true;
+		    			    		break;
+		    			    	}
+		    			    }
+		    			    if(found) {
+			    			    subgraph.remove(target);
+					    		minus.addAll(subgraph);
+					    		extractedMatched.put(triple, true);
+					    		cachedMatched.put(entry.getKey(), true);
+					    		break;
+		    			    }
+	    				}
+	    			}
+	    		}
     		}
     	}
     	
@@ -388,6 +377,35 @@ public class LinkedDataManagerProv {
     	}
     	
     	return Arrays.asList(minus, plus);
+    }
+    
+    /**
+     * Group triples by blank nodes. if they have the same blank node, they are group together.
+     * 
+     * @param triples list of RDFTriple
+     * @return a map from Element containing a blank node to list of triples containing that blank node
+     */
+    public Map<Element, List<RDFTriple>> groupNodes(List<RDFTriple> triples) {
+    	Map<Element, List<RDFTriple>> subgraph = new HashMap<Element, List<RDFTriple>>();
+    	for(RDFTriple triple: triples) {
+    		//get blank node
+    		Element blankName;
+    		if(DataType.isBlankNode(triple.getSubject().toString())) {
+    			blankName = triple.getSubject();
+    		} else {
+    			blankName = triple.getObject();
+    		}
+    		//insert into map
+    		if(subgraph.get(blankName) == null) {
+    			List<RDFTriple> curTriple = new ArrayList<RDFTriple>();
+    			curTriple.add(triple);
+    			subgraph.put(blankName, curTriple);
+    		} else {
+    			subgraph.get(blankName).add(triple);
+    		}
+    	}
+    	
+    	return subgraph;
     }
     
     /**
