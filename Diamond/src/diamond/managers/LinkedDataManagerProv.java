@@ -242,9 +242,6 @@ public class LinkedDataManagerProv {
 	        }
 			
 			//Separate blank nodes from normal nodes
-			if(uri.toString().equals("http://data.semanticweb.org/person/kay-uwe-schmidt")) {
-				System.out.println("asdas");
-			}
 			List<List<RDFTriple>> cached = separateNodes(cachedTriples);
 			List<RDFTriple> cachedNotBlank = cached.get(0);
 			List<RDFTriple> cachedBlank = cached.get(1);
@@ -303,76 +300,71 @@ public class LinkedDataManagerProv {
     	Map<Element, List<RDFTriple>> extractedSubgraphs = groupNodes(extractedBlank);
     	
     	//Create match between extracted and subgraph
-    	Map<RDFTriple, Boolean> extractedMatched = new HashMap<RDFTriple, Boolean>();
-    	Map<Element, Boolean> cachedMatched = new HashMap<Element, Boolean>();
+    	Map<Element, Boolean> extractedMatched = new HashMap<Element, Boolean>();
     	List<RDFTriple> minus = new ArrayList<RDFTriple>();
     	List<RDFTriple> plus = new ArrayList<RDFTriple>();
-    	for(Map.Entry<Element, List<RDFTriple>> entryExt : extractedSubgraphs.entrySet()) {
-    		List<RDFTriple> subgraphExt = entryExt.getValue();
-    		List<RDFTriple> same = new ArrayList<RDFTriple>();
-    		for(RDFTriple triple: subgraphExt) {
-	    		if(DataType.isBlankNode(triple.getSubject().toString())) {
-	    			Element pred = triple.getPredicate();
-	    			Element obj = triple.getObject();
-	    			for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
-	    				if(cachedMatched.get(entry.getKey()) == null) {
-	    					List<RDFTriple> subgraph = entry.getValue();
-	    					RDFTriple target = null;
-		    			    boolean found = false;
-		    			    for(RDFTriple node: subgraph) {
-		    			    	if(node.getPredicate().equals(pred) && node.getObject().equals(obj)) {
-		    			    		target = node;
-		    			    		found = true;
-		    			    		break;
-		    			    	}
-		    			    }
-		    			    if(found) {
-			    			    subgraph.remove(target);
-					    		minus.addAll(subgraph);
-					    		extractedMatched.put(triple, true);
-					    		cachedMatched.put(entry.getKey(), true);
-					    		same.add(triple);
-					    		break;
-		    			    }
-	    				}
+    	
+    	for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
+    		List<RDFTriple> subgraph = entry.getValue();
+    		Element maxElement = null;
+    		int max = 0;
+    		List<RDFTriple> sameTriplesCache = new ArrayList<RDFTriple>();
+			List<RDFTriple> sameTriplesExt = new ArrayList<RDFTriple>();
+    		
+    		for(Map.Entry<Element, List<RDFTriple>> entryExt : extractedSubgraphs.entrySet()) {
+    			if(extractedMatched.get(entryExt.getKey()) == null) {
+	    			List<RDFTriple> subgraphExt = entryExt.getValue();
+	    			int maxForEntry = 0;
+	    			for(RDFTriple triple: subgraph) {
+	    				if(DataType.isBlankNode(triple.getSubject().toString())) {
+							Element pred = triple.getPredicate();
+			    			Element obj = triple.getObject();
+			    			for(RDFTriple tripleExt: subgraphExt) {
+			    				if(tripleExt.getPredicate().equals(pred) && tripleExt.getObject().equals(obj)) {
+			    					maxForEntry++;
+			    					sameTriplesCache.add(triple);
+			    					sameTriplesExt.add(tripleExt);
+			    					break;
+			    				}
+		    				}
+						} else {
+							Element pred = triple.getPredicate();
+			    			Element sub = triple.getSubject();
+			    			for(RDFTriple tripleExt: subgraphExt) {
+			    				if(tripleExt.getPredicate().equals(pred) && tripleExt.getSubject().equals(sub)) {
+			    					maxForEntry++;
+			    					sameTriplesCache.add(triple);
+			    					sameTriplesExt.add(tripleExt);
+			    					break;
+			    				}
+		    				}
+						}
 	    			}
-	    		} else {
-	    			Element pred = triple.getPredicate();
-	    			Element sub = triple.getSubject();
-	    			for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
-	    				if(cachedMatched.get(entry.getKey()) == null) {
-		    			    List<RDFTriple> subgraph = entry.getValue();
-		    			    RDFTriple target = null;
-		    			    boolean found = false;
-		    			    for(RDFTriple node: subgraph) {
-		    			    	if(node.getPredicate().equals(pred) && node.getSubject().equals(sub)) {
-		    			    		target = node;
-		    			    		found = true;
-		    			    		break;
-		    			    	}
-		    			    }
-		    			    if(found) {
-			    			    subgraph.remove(target);
-					    		minus.addAll(subgraph);
-					    		extractedMatched.put(triple, true);
-					    		cachedMatched.put(entry.getKey(), true);
-					    		break;
-		    			    }
-	    				}
+	    			if(maxForEntry > max) {
+	    				max = maxForEntry;
+	    				maxElement = entryExt.getKey();
 	    			}
-	    		}
+    			}
     		}
+    		
+    		//If no match for cached delete everything
+    		if(maxElement == null) {
+    			minus.addAll(subgraph);
+    		} else {
+    			subgraph.removeAll(sameTriplesCache);
+    			List<RDFTriple> subgraphExt = extractedSubgraphs.get(maxElement);
+    			subgraphExt.removeAll(sameTriplesExt);
+    			minus.addAll(subgraph);
+    			plus.addAll(subgraphExt);
+    			extractedMatched.put(maxElement, true);
+    		}
+    		
     	}
     	
     	//Add left overs to minus or plus
-    	for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
-    		if(cachedMatched.get(entry.getKey()) == null) {
-    			minus.addAll(entry.getValue());
-    		}
-    	}
-    	for(RDFTriple triple: extractedBlank) {
-    		if(extractedMatched.get(triple) == null) {
-    			plus.add(triple);
+    	for(Map.Entry<Element, List<RDFTriple>> entryExt : extractedSubgraphs.entrySet()) {
+    		if(extractedMatched.get(entryExt.getKey()) == null) {
+    			plus.addAll(entryExt.getValue());
     		}
     	}
     	
