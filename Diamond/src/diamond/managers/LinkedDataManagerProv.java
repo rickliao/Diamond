@@ -295,35 +295,42 @@ public class LinkedDataManagerProv {
      * @return Index 0: token to be removed, Index 1: token to be inserted
      */
     public List<List<RDFTriple>> calculateBlankDifference(List<RDFTriple> cachedBlank, List<RDFTriple> extractedBlank) {
-    	//make blank nodes into subgraphs
+    	// make blank nodes into subgraphs with key being the blank nodes
     	Map<Element, List<RDFTriple>> cachedSubgraphs = groupNodes(cachedBlank);
     	Map<Element, List<RDFTriple>> extractedSubgraphs = groupNodes(extractedBlank);
     	
-    	//Create match between extracted and subgraph
+    	// Create match between extracted and subgraph
     	Map<Element, Boolean> extractedMatched = new HashMap<Element, Boolean>();
     	List<RDFTriple> minus = new ArrayList<RDFTriple>();
     	List<RDFTriple> plus = new ArrayList<RDFTriple>();
     	
+    	// This whole loop: For each subgraph in cached, c, find a subgraph, e, from extracted
+    	// such that e has the maximum number of triples that is the same as c 
     	for(Map.Entry<Element, List<RDFTriple>> entry : cachedSubgraphs.entrySet()) {
     		List<RDFTriple> subgraph = entry.getValue();
     		Element maxElement = null;
     		int max = 0;
+    		//Remember which triples are the same so we can find difference faster later
     		List<RDFTriple> sameTriplesCache = new ArrayList<RDFTriple>();
 			List<RDFTriple> sameTriplesExt = new ArrayList<RDFTriple>();
     		
     		for(Map.Entry<Element, List<RDFTriple>> entryExt : extractedSubgraphs.entrySet()) {
+    			//If this entry of extracted has not already being matched
     			if(extractedMatched.get(entryExt.getKey()) == null) {
 	    			List<RDFTriple> subgraphExt = entryExt.getValue();
 	    			int maxForEntry = 0;
+	    			List<RDFTriple> sameTriplesCacheTemp = new ArrayList<RDFTriple>();
+	    			List<RDFTriple> sameTriplesExtTemp = new ArrayList<RDFTriple>();
 	    			for(RDFTriple triple: subgraph) {
+	    				//See if blank is in sub or obj and compare pred and sub or pred and obj, respectively
 	    				if(DataType.isBlankNode(triple.getSubject().toString())) {
 							Element pred = triple.getPredicate();
 			    			Element obj = triple.getObject();
 			    			for(RDFTriple tripleExt: subgraphExt) {
 			    				if(tripleExt.getPredicate().equals(pred) && tripleExt.getObject().equals(obj)) {
 			    					maxForEntry++;
-			    					sameTriplesCache.add(triple);
-			    					sameTriplesExt.add(tripleExt);
+			    					sameTriplesCacheTemp.add(triple);
+			    					sameTriplesExtTemp.add(tripleExt);
 			    					break;
 			    				}
 		    				}
@@ -333,8 +340,8 @@ public class LinkedDataManagerProv {
 			    			for(RDFTriple tripleExt: subgraphExt) {
 			    				if(tripleExt.getPredicate().equals(pred) && tripleExt.getSubject().equals(sub)) {
 			    					maxForEntry++;
-			    					sameTriplesCache.add(triple);
-			    					sameTriplesExt.add(tripleExt);
+			    					sameTriplesCacheTemp.add(triple);
+			    					sameTriplesExtTemp.add(tripleExt);
 			    					break;
 			    				}
 		    				}
@@ -343,6 +350,8 @@ public class LinkedDataManagerProv {
 	    			if(maxForEntry > max) {
 	    				max = maxForEntry;
 	    				maxElement = entryExt.getKey();
+	    				sameTriplesCache = sameTriplesCacheTemp;
+	    				sameTriplesExt = sameTriplesExtTemp;
 	    			}
     			}
     		}
@@ -356,12 +365,13 @@ public class LinkedDataManagerProv {
     			subgraphExt.removeAll(sameTriplesExt);
     			minus.addAll(subgraph);
     			plus.addAll(subgraphExt);
+    			//mark this extracted entry as matched
     			extractedMatched.put(maxElement, true);
     		}
     		
     	}
     	
-    	//Add left overs to minus or plus
+    	//Add left overs to plus
     	for(Map.Entry<Element, List<RDFTriple>> entryExt : extractedSubgraphs.entrySet()) {
     		if(extractedMatched.get(entryExt.getKey()) == null) {
     			plus.addAll(entryExt.getValue());
