@@ -13,7 +13,7 @@ public class CacheServer {
         // HTTP connector
         ServerConnector http = new ServerConnector(server);
         http.setHost("localhost");
-        http.setPort(8080);
+        http.setPort(3000);
         http.setIdleTimeout(30000);
  
         // Set the connector

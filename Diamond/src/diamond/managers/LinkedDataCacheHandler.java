@@ -35,53 +35,58 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 	
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-		//Parse the request URL
-		String[] options = request.getQueryString().split("&");
-		int steps = 0;
-		boolean timer = false;
-		boolean verbose = false;
-		QueryProcessor queryProcessor = null;
-		String query = null;
-		for(String op:options) {
-			String[] varValue = op.split("=");
-			String variable = varValue[0];
-			String value = varValue[1];
-			switch(variable) {
-				case "query": 
-					File qFile = new File(value);
-					queryProcessor = new FileQueryProcessor(qFile, false);
-					query = readFile(qFile.toString());
-					break;
-				case "steps":
-					steps = Integer.parseInt(value);
-					break;
-				case "timer":
-					timer = Boolean.parseBoolean(value);
-					break;
-				case "verbose":
-					verbose = Boolean.parseBoolean(value);
-					break;	
+		if(request.getQueryString().contains("get")) {
+			response.setContentType("application/rdf; charset=utf-8");
+			
+		} else {
+			//Parse the request URL
+			String[] options = request.getQueryString().split("&");
+			int steps = 0;
+			boolean timer = false;
+			boolean verbose = false;
+			QueryProcessor queryProcessor = null;
+			String query = null;
+			for(String op:options) {
+				String[] varValue = op.split("=");
+				String variable = varValue[0];
+				String value = varValue[1];
+				switch(variable) {
+					case "query": 
+						File qFile = new File(value);
+						queryProcessor = new FileQueryProcessor(qFile, false);
+						query = readFile(qFile.toString());
+						break;
+					case "steps":
+						steps = Integer.parseInt(value);
+						break;
+					case "timer":
+						timer = Boolean.parseBoolean(value);
+						break;
+					case "verbose":
+						verbose = Boolean.parseBoolean(value);
+						break;	
+				}
 			}
+			
+			//Process the query
+			QueryStats sol = null;
+			try {
+				queryProcessor.process();
+				//LinkedDataManager linkedDataManager = new LinkedDataManager(queryProcessor);
+				//sol = linkedDataManager.executeQueryOnWebOfLinkedData(cache, steps, timer, verbose);
+				LinkedDataManagerProv linkedDataManager = new LinkedDataManagerProv(queryProcessor, query);
+				sol = linkedDataManager.executeQueryOnWebOfLinkedData(cacheProv, steps, timer, verbose);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			//Set response for client
+			response.setContentType("application/java-serialized-object; charset=utf-8");
+	        PrintWriter pw = response.getWriter();
+	        pw.print(sol.getSolutionSet().toString());
+	        response.setStatus(HttpServletResponse.SC_OK);
+	        baseRequest.setHandled(true);
 		}
-		
-		//Process the query
-		QueryStats sol = null;
-		try {
-			queryProcessor.process();
-			//LinkedDataManager linkedDataManager = new LinkedDataManager(queryProcessor);
-			//sol = linkedDataManager.executeQueryOnWebOfLinkedData(cache, steps, timer, verbose);
-			LinkedDataManagerProv linkedDataManager = new LinkedDataManagerProv(queryProcessor, query);
-			sol = linkedDataManager.executeQueryOnWebOfLinkedData(cacheProv, steps, timer, verbose);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		//Set response for client
-		response.setContentType("application/java-serialized-object; charset=utf-8");
-        PrintWriter pw = response.getWriter();
-        pw.print(sol.getSolutionSet().toString());
-        response.setStatus(HttpServletResponse.SC_OK);
-        baseRequest.setHandled(true);
 	}
 	
 	private String readFile(String file) throws IOException {
