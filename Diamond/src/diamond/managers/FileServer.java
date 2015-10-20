@@ -22,7 +22,7 @@ public class FileServer {
  
         ResourceHandler resource_handler = new ResourceHandler();
         resource_handler.setDirectoriesListed(true);
-        resource_handler.setResourceBase("test");
+        resource_handler.setResourceBase(".");
  
         // Add the ResourceHandler to the server.
         HandlerList handlers = new HandlerList();

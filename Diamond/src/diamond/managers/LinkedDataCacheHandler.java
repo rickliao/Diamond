@@ -14,6 +14,7 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.openrdf.model.impl.BNodeImpl;
 
+import diamond.data.SolutionSet;
 import diamond.processors.FileQueryProcessor;
 import diamond.processors.QueryProcessor;
 
@@ -70,12 +71,14 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 			
 			//Process the query
 			QueryStats sol = null;
+			SolutionSet optimisticRuns = null;
 			try {
 				queryProcessor.process();
 				//LinkedDataManager linkedDataManager = new LinkedDataManager(queryProcessor);
 				//sol = linkedDataManager.executeQueryOnWebOfLinkedData(cache, steps, timer, verbose);
 				LinkedDataManagerProv linkedDataManager = new LinkedDataManagerProv(queryProcessor, query);
 				sol = linkedDataManager.executeQueryOnWebOfLinkedData(cacheProv, steps, timer, verbose);
+				optimisticRuns = linkedDataManager.runOptimisticExecution(linkedDataManager.getRedereferenceURIs(), cacheProv, verbose);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -84,6 +87,9 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 			response.setContentType("application/java-serialized-object; charset=utf-8");
 	        PrintWriter pw = response.getWriter();
 	        pw.print(sol.getSolutionSet().toString());
+	        if(optimisticRuns != null) {
+	        	pw.print(optimisticRuns.toString());
+	        }
 	        response.setStatus(HttpServletResponse.SC_OK);
 	        baseRequest.setHandled(true);
 		}

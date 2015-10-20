@@ -58,6 +58,7 @@ public class LinkedDataManagerProv {
     private final URLManager urlManager;
     private final ExecutorService executor;
     private String query;
+    private ArrayList<URI> reDereference;
     public String result;
 
     /**
@@ -88,7 +89,7 @@ public class LinkedDataManagerProv {
         int counter = 0, numTriples = 0;
         boolean useCache = (myCache != null);
         LinkedDataCacheProv cache = useCache ? myCache : null;
-        ArrayList<URI> reDereference = new ArrayList<URI>();
+        reDereference = new ArrayList<URI>();
         
         if(useCache && verbose) System.out.println("Cached data for " + cache.size() + " URLs");
         
@@ -210,9 +211,18 @@ public class LinkedDataManagerProv {
         if(hasTimer) System.out.println(timer.toString());
         QueryStats result = new QueryStats(solutionSet, counter, numTriples);
         
-        runOptimisticExecution(reDereference, cache, verbose);
-        
         return result;
+    }
+    
+    
+    /**
+     * Return the list of URIs to be re-dereferenced for optimistic execution
+     * reDereference only gets populated after executeQueryOnWebOfLinkedData is run
+     * 
+     * @return reDereference
+     */
+    public List<URI> getRedereferenceURIs() {
+    	return reDereference;
     }
     
     /**
@@ -223,7 +233,7 @@ public class LinkedDataManagerProv {
      * @param verbose
      * @throws Exception
      */
-    public void runOptimisticExecution(List<URI> reDereference, LinkedDataCacheProv cache, boolean verbose) throws Exception {
+    public SolutionSet runOptimisticExecution(List<URI> reDereference, LinkedDataCacheProv cache, boolean verbose) throws Exception {
     	for(int i = 0; i < reDereference.size(); i++) {
         	URI uri = reDereference.get(i);
         	List<RDFTriple> cachedTriples = cache.dereference(uri, query);
@@ -285,6 +295,12 @@ public class LinkedDataManagerProv {
 				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
 			}
         }
+    	
+    	// If there is something to dereference
+    	if(reDereference.size() > 0) {
+    		return reteNetwork.getSolutionSet();
+    	}
+    	return null;
     }
     
     /**

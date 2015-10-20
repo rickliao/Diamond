@@ -122,9 +122,15 @@ public class LinkedDataCacheProv {
 			URI predicate = factory.createURI(triple.getPredicate().getData());
 			Literal object = factory.createLiteral(triple.getObject().getData());
 			try {
-				if(!predicate.toString().equals("http://null.null")) {
+				if((predicate.toString().equals("http://null.null") && add.size() > 0) || !predicate.toString().equals("http://null.null")) {
+					boolean addEmptyAfterDelete = false;
+					if(dereference(uri, query).size() == 1) {
+						addEmptyAfterDelete = true;
+					}
 					connection.remove(subject, predicate, object, context);
-					deleteQueryConnection(uri, query);
+					if(addEmptyAfterDelete) {
+						addEmptyToCache(uri, query);
+					}
 				}
 			} catch (RepositoryException e) {
 				e.printStackTrace();
@@ -209,6 +215,25 @@ public class LinkedDataCacheProv {
 			e.printStackTrace();
 		}
 		return 0;
+	}
+	
+	/**
+	 * Prints the entire cache
+	 * For debug use only
+	 * @throws RepositoryException 
+	 */
+	public void printCache() throws RepositoryException {
+		RepositoryResult<Statement> statements = connection.getStatements(null, null, null, false);
+	     // iterate through triples and set triple token
+	        while (statements.hasNext()) {
+	            Statement statement = statements.next();
+	            Element subject = formElement(SPO.SUBJECT, statement.getSubject().toString());
+	            Element predicate = formElement(SPO.PREDICATE, statement.getPredicate().toString());
+	            Element object = formElement(SPO.OBJECT, statement.getObject().toString());
+	            
+	            System.out.println(subject+" "+predicate+" "+object);
+	        }
+	        System.out.println();
 	}
 	
 	private static Element formElement(SPO spo, String data) {
