@@ -5,8 +5,8 @@ xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 xmlns:swrc="http://swrc.ontoware.org/ontology#">
 
 <rdf:Description
-rdf:about="http://localhost:8080/rdf/baseTests.xml">
-  <swrc:isPartOf rdf:resource="http://localhost:8080/rdf/object.xml" />
+rdf:about="http://localhost:8080/rdf/object.xml">
+  <swrc:University rdf:resource="www.utxas.edu" />
 </rdf:Description>
 
 </rdf:RDF>

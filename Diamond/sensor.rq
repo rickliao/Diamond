@@ -2,8 +2,9 @@ prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 prefix cd:<http://www.recshop.fake/cd#>
 PREFIX swrc: <http://swrc.ontoware.org/ontology#>
 
-SELECT ?x ?y
+SELECT *
 WHERE { 
        <http://localhost:8080/rdf/test.xml> swrc:isPartOf ?x .
-       ?x swrc:author ?y.
+       ?x swrc:isPartOf ?y.
+       ?y swrc:University ?z
 }
