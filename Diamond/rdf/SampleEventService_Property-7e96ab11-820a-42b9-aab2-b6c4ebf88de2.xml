@@ -7,17 +7,18 @@ xmlns:ct="http://www.insight-centre.org/citytraffic#"
 xmlns:ssn="http://purl.oclc.org/NET/ssnx/ssn#"
 xmlns:sao="http://purl.oclc.org/NET/sao#">
 
-<!-- http://www.insight-centre.org/dataset/SampleEventService#Property-5cb2e2d7-8773-4e66-9690-6cfb3591c17b -->
+<!-- http://www.insight-centre.org/dataset/SampleEventService#Property-7e96ab11-820a-42b9-aab2-b6c4ebf88de2 -->
 
-    <owl:NamedIndividual rdf:about="http://localhost:8080/rdf/SampleEventService_Property-5cb2e2d7-8773-4e66-9690-6cfb3591c17b.xml">
-        <rdf:type rdf:resource="http://www.insight-centre.org/citytraffic#WindSpeed"/>
-        <ssn:observedProperty rdf:resource="http://www.insight-centre.org/citytraffic#WindSpeed"/>
+    <owl:NamedIndividual rdf:about="http://localhost:8080/rdf/SampleEventService_Property-7e96ab11-820a-42b9-aab2-b6c4ebf88de2.xml">
+        <rdf:type rdf:resource="http://www.insight-centre.org/citytraffic#Humidity"/>
+        <ssn:observedProperty rdf:resource="http://www.insight-centre.org/citytraffic#Humidity"/>
         <ssn:isPropertyOf rdf:resource="http://www.insight-centre.org/dataset/SampleEventService#FoI-a441f5f4-f09e-453c-89cb-965554bd0cd4"/>
         <ssn:observedBy rdf:resource="http://localhost:8080/rdf/SampleEventService_AarhusWeatherData0.xml"/>
-        <sao:hasValue>7.4</sao:hasValue>
+        <sao:hasValue>64</sao:hasValue>
     </owl:NamedIndividual>
     
 </rdf:RDF>
+
 
 
 

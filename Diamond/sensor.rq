@@ -16,4 +16,9 @@ WHERE {
     ?obId2 ssn:observedProperty ct:Temperature.
 	?obId2 sao:hasValue ?v2.
 	?obId2 ssn:observedBy <http://localhost:8080/rdf/SampleEventService_AarhusWeatherData0.xml>.
+	
+	<http://localhost:8080/rdf/SampleEventService_AarhusWeatherData0.xml> ssn:observes ?obId3.
+    ?obId3 ssn:observedProperty ct:Humidity.
+	?obId3 sao:hasValue ?v3.
+	?obId3 ssn:observedBy <http://localhost:8080/rdf/SampleEventService_AarhusWeatherData0.xml>.
 }
