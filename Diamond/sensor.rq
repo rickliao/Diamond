@@ -1,10 +1,19 @@
 prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 prefix cd:<http://www.recshop.fake/cd#>
 PREFIX swrc: <http://swrc.ontoware.org/ontology#>
+PREFIX ssn:<http://purl.oclc.org/NET/ssnx/ssn#>
+PREFIX sao:<http://purl.oclc.org/NET/sao#>
+PREFIX ct:<http://www.insight-centre.org/citytraffic#>
 
 SELECT *
 WHERE { 
-       <http://localhost:8080/rdf/test.xml> swrc:isPartOf ?x .
-       ?x swrc:isPartOf ?y.
-       ?y swrc:University ?z
+    <http://localhost:8080/rdf/SampleEventService_AarhusWeatherData0.xml> ssn:observes ?obId1.
+    ?obId1 ssn:observedProperty ct:WindSpeed.
+	?obId1 sao:hasValue ?v1.
+	?obId1 ssn:observedBy <http://localhost:8080/rdf/SampleEventService_AarhusWeatherData0.xml>.
+	
+	<http://localhost:8080/rdf/SampleEventService_AarhusWeatherData0.xml> ssn:observes ?obId2.
+    ?obId2 ssn:observedProperty ct:Temperature.
+	?obId2 sao:hasValue ?v2.
+	?obId2 ssn:observedBy <http://localhost:8080/rdf/SampleEventService_AarhusWeatherData0.xml>.
 }

@@ -23,12 +23,14 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 	private LinkedDataCache cache = null;
 	private LinkedDataCacheProv cacheProv = null;
 	private File cacheFile = null;
+	private RdfGenerator gen = null;
 
 	public LinkedDataCacheHandler(File myCacheFile) {
 		try {
 			cacheFile = myCacheFile;
 			//cache = new LinkedDataCache(cacheFile);
 			cacheProv = new LinkedDataCacheProv(cacheFile);
+			gen = new RdfGenerator();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -77,6 +79,9 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 				//LinkedDataManager linkedDataManager = new LinkedDataManager(queryProcessor);
 				//sol = linkedDataManager.executeQueryOnWebOfLinkedData(cache, steps, timer, verbose);
 				LinkedDataManagerProv linkedDataManager = new LinkedDataManagerProv(queryProcessor, query);
+				//prepare the rdf files for optimistic execution
+				gen.generateNext();
+				//execute
 				sol = linkedDataManager.executeQueryOnWebOfLinkedData(cacheProv, steps, timer, verbose);
 				optimisticRuns = linkedDataManager.runOptimisticExecution(linkedDataManager.getRedereferenceURIs(), cacheProv, verbose);
 			} catch (Exception e) {
