@@ -208,7 +208,7 @@ public class LinkedDataManagerProv {
         	System.out.println("\nSolutions: " + solutionSet.size() + "; Dereferened URLs: " +
         		counter + "; Tripples: " + numTriples);
         }
-        if(hasTimer) System.out.println(timer.toString());
+        if(hasTimer) System.out.println("Execute: " + timer.toString());
         QueryStats result = new QueryStats(solutionSet, counter, numTriples);
         
         return result;
@@ -233,7 +233,9 @@ public class LinkedDataManagerProv {
      * @param verbose
      * @throws Exception
      */
-    public SolutionSet runOptimisticExecution(List<URI> reDereference, LinkedDataCacheProv cache, boolean verbose) throws Exception {
+    public SolutionSet runOptimisticExecution(List<URI> reDereference, LinkedDataCacheProv cache, boolean hasTimer, boolean verbose) throws Exception {
+    	Timer timer = new Timer();
+    	timer.start();
     	for(int i = 0; i < reDereference.size(); i++) {
         	URI uri = reDereference.get(i);
         	List<RDFTriple> cachedTriples = cache.dereference(uri, query);
@@ -295,6 +297,8 @@ public class LinkedDataManagerProv {
 				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
 			}
         }
+    	timer.stop();
+    	if(hasTimer) System.out.println("Optimistic: " + timer.toString());
     	
     	// If there is something to dereference
     	if(reDereference.size() > 0) {

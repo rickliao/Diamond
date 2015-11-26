@@ -14,10 +14,22 @@ xmlns:sao="http://purl.oclc.org/NET/sao#">
         <ssn:observedProperty rdf:resource="http://www.insight-centre.org/citytraffic#Humidity"/>
         <ssn:isPropertyOf rdf:resource="http://www.insight-centre.org/dataset/SampleEventService#FoI-a441f5f4-f09e-453c-89cb-965554bd0cd4"/>
         <ssn:observedBy rdf:resource="http://localhost:8080/rdf/SampleEventService_AarhusWeatherData0.xml"/>
-        <sao:hasValue>64</sao:hasValue>
+        <sao:hasValue>68</sao:hasValue>
     </owl:NamedIndividual>
     
 </rdf:RDF>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

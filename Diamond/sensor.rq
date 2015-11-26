@@ -21,4 +21,9 @@ WHERE {
     ?obId3 ssn:observedProperty ct:Humidity.
 	?obId3 sao:hasValue ?v3.
 	?obId3 ssn:observedBy <http://localhost:8080/rdf/SampleEventService_AarhusWeatherData0.xml>.
+	
+	<http://localhost:8080/rdf/SampleEventService_AarhusTrafficData158505.xml> ssn:observes ?obId4.
+	?obId4 ssn:observedProperty ct:CongestionLevel.
+	?obId4 sao:hasValue ?v4.
+	?obId4 ssn:observedBy <http://localhost:8080/rdf/SampleEventService_AarhusTrafficData158505.xml>.
 }

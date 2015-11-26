@@ -83,7 +83,7 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 				gen.generateNext();
 				//execute
 				sol = linkedDataManager.executeQueryOnWebOfLinkedData(cacheProv, steps, timer, verbose);
-				optimisticRuns = linkedDataManager.runOptimisticExecution(linkedDataManager.getRedereferenceURIs(), cacheProv, verbose);
+				optimisticRuns = linkedDataManager.runOptimisticExecution(linkedDataManager.getRedereferenceURIs(), cacheProv, timer, verbose);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

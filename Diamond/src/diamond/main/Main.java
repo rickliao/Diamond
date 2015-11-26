@@ -30,6 +30,7 @@ public class Main {
         StepsArg stepsArg = new StepsArg();
         boolean timer = false;
         boolean verbose = false;
+        int repeat = 1;
 
         String manual = "";
         manual += "usage: Diamond.jar [parameters]\n";
@@ -40,6 +41,7 @@ public class Main {
         manual += "    -depth <steps>       Set maximum depth of link traversal. Do not use this feature for continuous querying.\n";
         manual += "    -verbose             Show the URLs that are being dereferenced when executing query on the web of linked data.\n";
         manual += "    -timer               Execute Timer.\n";
+        manual += "    -repeat              The number of times to repeat this query\n";
 
         // iterate through the arguments
         for (int i = 0; i < args.length; ++i) {
@@ -90,6 +92,12 @@ public class Main {
                     // set test flag for future use
                     verbose = true;
                 }
+            } else if (args[i].equals("-repeat")) {
+            	// make sure we have no other args
+            	if (debugArg.ready() == false) {
+            		// set number of times to repeat
+            		repeat = Integer.parseInt(args[i + 1]);
+            	}
             }
         }
 
@@ -107,8 +115,10 @@ public class Main {
             }
             CacheClient client = new CacheClient();
             client.start();
-            String sol = client.executeQuery(file, steps, timer, verbose);
-            System.out.println(sol);
+            for(int i = 0; i < repeat; i++) {
+            	String sol = client.executeQuery(file, steps, timer, verbose);
+                System.out.println(sol);
+            }
             System.exit(0);
         } else if (queryFileArg.ready() == true && dataFileArg.ready() == true && debugArg.ready() == false) {
             String queryFileName = queryFileArg.fileName;

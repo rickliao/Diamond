@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+
+<rdf:RDF
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:owl="http://www.w3.org/2002/07/owl#"
+xmlns:ssn="http://purl.oclc.org/NET/ssnx/ssn#"
+xmlns:owls="http://www.daml.org/services/owl-s/1.2/Service.owl#"
+xmlns:ces="http://www.insight-centre.org/ces#">
+
+    <owl:NamedIndividual rdf:about="http://localhost:8080/rdf/SampleEventService_AarhusTrafficData158505.xml">
+        <rdf:type rdf:resource="http://purl.oclc.org/NET/ssnx/ssn#Sensor"/>
+        <rdf:type rdf:resource="http://www.insight-centre.org/ces#PrimitiveEventService"/>
+        <owls:presents rdf:resource="http://www.insight-centre.org/dataset/SampleEventService#AarhusTrafficData158505-Profile"/>
+        <ssn:observes rdf:resource="http://localhost:8080/rdf/SampleEventService_Property-b9f96475-bd7f-4868-8a3b-4d01ff8f9359.xml"/>
+        <owls:supports>
+            <rdf:Description>
+                <rdf:type rdf:resource="http://www.insight-centre.org/ces#HttpGrounding"/>
+                <ces:httpService rdf:resource="http://www.insight-centre.org/dataset/SampleEventService#AarhusTrafficData158505"/>
+            </rdf:Description>
+        </owls:supports>
+    </owl:NamedIndividual>
+
+</rdf:RDF>
