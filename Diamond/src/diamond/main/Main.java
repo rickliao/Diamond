@@ -31,6 +31,7 @@ public class Main {
         boolean timer = false;
         boolean verbose = false;
         int repeat = 1;
+        boolean optimistic = false;
 
         String manual = "";
         manual += "usage: Diamond.jar [parameters]\n";
@@ -42,6 +43,7 @@ public class Main {
         manual += "    -verbose             Show the URLs that are being dereferenced when executing query on the web of linked data.\n";
         manual += "    -timer               Execute Timer.\n";
         manual += "    -repeat              The number of times to repeat this query\n";
+        manual += "    -optimistic          Enable optimistic execution";
 
         // iterate through the arguments
         for (int i = 0; i < args.length; ++i) {
@@ -98,6 +100,12 @@ public class Main {
             		// set number of times to repeat
             		repeat = Integer.parseInt(args[i + 1]);
             	}
+            } else if (args[i].equals("-optimistic")) {
+            	// make sure we have no other args
+            	if (debugArg.ready() == false) {
+            		// set number of times to repeat
+            		optimistic = true;
+            	}
             }
         }
 
@@ -116,7 +124,7 @@ public class Main {
             CacheClient client = new CacheClient();
             client.start();
             for(int i = 0; i < repeat; i++) {
-            	String sol = client.executeQuery(file, steps, timer, verbose);
+            	String sol = client.executeQuery(file, steps, timer, verbose, optimistic, cacheFileArg.ready());
                 System.out.println(sol);
             }
             System.exit(0);

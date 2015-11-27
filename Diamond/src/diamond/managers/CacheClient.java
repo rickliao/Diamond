@@ -27,8 +27,8 @@ public class CacheClient {
         httpClient.start();
 	}
 	
-	public String executeQuery(File query, int steps, boolean timer, boolean verbose) throws InterruptedException, TimeoutException, ExecutionException, IOException, ClassNotFoundException {
-		Request request = httpClient.newRequest("http://localhost:3000/?query="+query.toString()+"&steps="+steps+"&timer="+timer+"&verbose="+verbose)
+	public String executeQuery(File query, int steps, boolean timer, boolean verbose, boolean optimistic, boolean cache) throws InterruptedException, TimeoutException, ExecutionException, IOException, ClassNotFoundException {
+		Request request = httpClient.newRequest("http://localhost:3000/?query="+query.toString()+"&steps="+steps+"&timer="+timer+"&verbose="+verbose+"&optimistic="+optimistic+"&cache="+cache)
                 .timeout(1000000, TimeUnit.SECONDS);
 		// Increase response content buffer to 500 MB 
 		FutureResponseListener listener = new FutureResponseListener(request, 500 * 1024 * 1024);

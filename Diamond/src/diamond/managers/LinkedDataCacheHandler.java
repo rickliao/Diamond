@@ -47,6 +47,8 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 			int steps = 0;
 			boolean timer = false;
 			boolean verbose = false;
+			boolean optimistic = false;
+			boolean hasCache = false;
 			QueryProcessor queryProcessor = null;
 			String query = null;
 			for(String op:options) {
@@ -67,7 +69,13 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 						break;
 					case "verbose":
 						verbose = Boolean.parseBoolean(value);
-						break;	
+						break;
+					case "optimistic":
+						optimistic = Boolean.parseBoolean(value);
+						break;
+					case "cache":
+						hasCache = Boolean.parseBoolean(value);
+						break;
 				}
 			}
 			
@@ -82,8 +90,14 @@ public class LinkedDataCacheHandler extends AbstractHandler{
 				//prepare the rdf files for optimistic execution
 				gen.generateNext();
 				//execute
-				sol = linkedDataManager.executeQueryOnWebOfLinkedData(cacheProv, steps, timer, verbose);
-				optimisticRuns = linkedDataManager.runOptimisticExecution(linkedDataManager.getRedereferenceURIs(), cacheProv, timer, verbose);
+				if(hasCache) {
+					sol = linkedDataManager.executeQueryOnWebOfLinkedData(cacheProv, steps, timer, verbose);
+				} else {
+					sol = linkedDataManager.executeQueryOnWebOfLinkedData(null, steps, timer, verbose);
+				}
+				if(optimistic) {
+					optimisticRuns = linkedDataManager.runOptimisticExecution(linkedDataManager.getRedereferenceURIs(), cacheProv, timer, verbose);
+				}
 			} catch (Exception e) {
 				e.printStackTrace();
 			}

@@ -173,7 +173,7 @@ public class LinkedDataManagerProv {
                             if(extractedTriples == null) {
                             	extractedTriples = new LinkedList<RDFTriple>();
                             }
-                            if(extractedTriples.size() == 0) {
+                            if(useCache && extractedTriples.size() == 0) {
                             	//If nothing is dereferenced add filler to repo
                                 //Otherwise, program will dereference it again next time
                             	cache.addEmptyToCache(entry.getKey(), query);
@@ -185,8 +185,10 @@ public class LinkedDataManagerProv {
                             tokenQueue.addAll(extractedTriples, entry.getKey());
                             
                             //write to cache
-                            for(RDFTriple triple:extractedTriples) {
-                            	cache.addToCache(entry.getKey(), query, triple);
+                            if(useCache) {
+	                            for(RDFTriple triple:extractedTriples) {
+	                            	cache.addToCache(entry.getKey(), query, triple);
+	                            }
                             }
                             if(verbose) System.out.println(extractedTriples.size() + " entries enqueued! Queue size: " + tokenQueue.size());
                             successfulDereference = true;
@@ -473,7 +475,7 @@ public class LinkedDataManagerProv {
      * 
      * @author Rick Liao
      */
-    private static class UpdateCacheAndReteNetwork implements Callable<Boolean> {
+    private static class UpdateCacheAndReteNetwork implements Callable<SolutionSet> {
     	private ReteNetwork reteNetwork;
     	private URI uri;
     	private List<RDFTriple> cachedTriples;
@@ -493,39 +495,73 @@ public class LinkedDataManagerProv {
     	}
     	
     	@Override
-    	public Boolean call() throws Exception {
-    		if (verbose) System.out.println(uri);
-    		// dereference the uri again to see if there are differences
+    	public SolutionSet call() throws Exception {
+    		/*Timer timer = new Timer();
+        	timer.start();
+        	List<RDFTriple> cachedTriples = cache.dereference(uri, query);
+        	
+	        if (verbose) System.out.println(uri);
+			// dereference the uri again to see if there are differences
 			Callable<List<RDFTriple>> derefURL = new DereferenceURL(uri);
 			Future<List<RDFTriple>> futureExtracted = executor.submit(derefURL);
 			List<RDFTriple> extractedTriples = null;
 			try {
 				extractedTriples = futureExtracted.get();
-    		} catch(InterruptedException e) {
-            	System.out.println("Interrupted: " + uri);
-            }
+			} catch(InterruptedException e) {
+	        	System.out.println("Interrupted: " + uri);
+	        } catch(ExecutionException e) {
+	        	e.printStackTrace();
+	        }
+			
+			//Separate blank nodes from normal nodes
+			List<List<RDFTriple>> cached = separateNodes(cachedTriples);
+			List<RDFTriple> cachedNotBlank = cached.get(0);
+			List<RDFTriple> cachedBlank = cached.get(1);
+			
+			List<List<RDFTriple>> extracted = separateNodes(extractedTriples);
+			List<RDFTriple> extractedNotBlank = extracted.get(0);
+			List<RDFTriple> extractedBlank = extracted.get(1);
 			
 			// minus token
-			List<RDFTriple> temp = new ArrayList<RDFTriple>(cachedTriples);
-			cachedTriples.removeAll(extractedTriples);
-			if(verbose) System.out.println("Delete: " + cachedTriples);
+			List<RDFTriple> temp = new ArrayList<RDFTriple>(cachedNotBlank);
+			cachedNotBlank.removeAll(extractedNotBlank);
+			if(verbose) System.out.println("Delete non-blank: " + cachedNotBlank);
 			// plus token
-			extractedTriples.removeAll(temp);
-			if(verbose) System.out.println("Add: " + extractedTriples);
-			//update cache
-			cache.updateCache(extractedTriples, cachedTriples, uri, query);
+			extractedNotBlank.removeAll(temp);
+			if(verbose) System.out.println("Add non-blank: " + extractedNotBlank);
 			
 			//insert into rete
-			for(RDFTriple triple: cachedTriples) {
-				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, uri));
-			}
-			for(RDFTriple triple: extractedTriples) {
+			for(RDFTriple triple: cachedNotBlank) {
 				if(!triple.getPredicate().getData().equals("http://null.null")) {
-					reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
+					reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, uri));
 				}
 			}
+			for(RDFTriple triple: extractedNotBlank) {
+				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
+			}
 			
-			return (cachedTriples.size()+extractedTriples.size()) == 0;
+			//Calculate difference blank triples
+			List<List<RDFTriple>> diff = calculateBlankDifference(cachedBlank, extractedBlank);
+			if(verbose) System.out.println("Delete blank: " + diff.get(0));
+			if(verbose) System.out.println("Add blank: " + diff.get(1));
+			
+			//update cache
+			cache.updateCache(extractedNotBlank, cachedNotBlank, uri, query);
+			cache.updateCache(diff.get(1), diff.get(0), uri, query);
+			
+			//insert into rete
+			for(RDFTriple triple: diff.get(0)) {
+				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, uri));
+			}
+			for(RDFTriple triple: diff.get(1)) {
+				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
+			}
+        	timer.stop();
+        	if(hasTimer) System.out.println("Optimistic: " + timer.toString());
+        	
+        	// If there is something to dereference
+        	return reteNetwork.getSolutionSet();*/
+    		return null;
     	}
     }
     
