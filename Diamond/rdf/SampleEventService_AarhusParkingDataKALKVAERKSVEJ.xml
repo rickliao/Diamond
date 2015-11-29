@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+
+<rdf:RDF
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:owl="http://www.w3.org/2002/07/owl#"
+xmlns:ssn="http://purl.oclc.org/NET/ssnx/ssn#"
+xmlns:owls="http://www.daml.org/services/owl-s/1.2/Service.owl#"
+xmlns:ces="http://www.insight-centre.org/ces#">
+
+    <owl:NamedIndividual rdf:about="http://localhost:8080/rdf/SampleEventService_AarhusParkingDataKALKVAERKSVEJ.xml">
+        <rdf:type rdf:resource="http://purl.oclc.org/NET/ssnx/ssn#PrimitiveEventService"/>
+        <ssn:observes rdf:resource="http://localhost:8080/rdf/SampleEventService_parkingproperty-8.xml"/>
+    </owl:NamedIndividual>
+
+</rdf:RDF>

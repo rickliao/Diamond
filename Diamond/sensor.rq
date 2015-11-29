@@ -6,7 +6,7 @@ PREFIX sao:<http://purl.oclc.org/NET/sao#>
 PREFIX ct:<http://www.insight-centre.org/citytraffic#>
 
 SELECT *
-WHERE { 
+WHERE {
     <http://localhost:8080/rdf/SampleEventService_AarhusWeatherData0.xml> ssn:observes ?obId1.
     ?obId1 ssn:observedProperty ct:WindSpeed.
 	?obId1 sao:hasValue ?v1.
@@ -26,4 +26,6 @@ WHERE {
 	?obId4 ssn:observedProperty ct:CongestionLevel.
 	?obId4 sao:hasValue ?v4.
 	?obId4 ssn:observedBy <http://localhost:8080/rdf/SampleEventService_AarhusTrafficData158505.xml>.
+	
+	
 }

@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+
+<rdf:RDF
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:owl="http://www.w3.org/2002/07/owl#"
+xmlns:ct="http://www.insight-centre.org/citytraffic#"
+xmlns:ssn="http://purl.oclc.org/NET/ssnx/ssn#"
+xmlns:sao="http://purl.oclc.org/NET/sao#">
+
+    <owl:NamedIndividual rdf:about="http://localhost:8080/rdf/SampleEventService_Property-11d60592-7d15-4934-9e23-f1b38df90fd5.xml">
+        <ssn:observedProperty rdf:resource="http://www.insight-centre.org/citytraffic#CongestionLevel"/>
+        <ssn:observedBy rdf:resource="http://localhost:8080/rdf/SampleEventService_AarhusTrafficData182955.xml"/>
+        <sao:hasValue>49</sao:hasValue>
+    </owl:NamedIndividual>
+    
+</rdf:RDF>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

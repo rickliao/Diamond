@@ -15,6 +15,16 @@ public class RdfGenerator {
 	private BufferedReader br1 = null;
 	private int count1 = 0;
 	private int interval1 = 5;
+	private BufferedReader br2 = null;
+	private int count2 = 0;
+	private int interval2 = 5;
+	private BufferedReader br3 = null;
+	private int count3 = 0;
+	private int interval3 = 30;
+	private BufferedReader br4 = null;
+	private int count4 = 0;
+	// There is no explicit interval in the stream. Since most are between 5 and 20, avg is 10.
+	private int interval4 = 10;
 	
     public RdfGenerator() {
     	try {
@@ -22,6 +32,11 @@ public class RdfGenerator {
     	    br0.readLine();
     	    br1 = new BufferedReader(new FileReader("src/diamond/streams/AarhusTrafficData158505.stream"));
     	    br1.readLine();
+    	    br2 = new BufferedReader(new FileReader("src/diamond/streams/AarhusTrafficData182955.stream"));
+    	    br2.readLine();
+    	    br3 = new BufferedReader(new FileReader("src/diamond/streams/AarhusParkingDataKALKVAERKSVEJ.stream"));
+    	    br3.readLine();
+    	    br4 = new BufferedReader(new FileReader("src/diamond/streams/UserLocationService.stream"));
     	} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -96,6 +111,104 @@ public class RdfGenerator {
 					for(int j = 0; j < input.size(); j++) {
 						if(input.get(j).contains("hasValue")) {
 							writer.println("        <sao:hasValue>"+data[2]+"</sao:hasValue>");
+						} else {
+							writer.println(input.get(j));
+						}
+					}
+					writer.println();
+					writer.close();
+				}
+			}
+			
+			if((line = br2.readLine()) != null) {
+				hasNext = true;
+				// if at interval
+				if(++count2 == interval2) {
+					// reset counter
+					count2 = 0;
+					String[] data = line.split(",");
+					
+					// loop through the files need to be updated
+					// read data
+					ArrayList<String> input = new ArrayList<String>();
+					BufferedReader in = new BufferedReader(new FileReader("rdf/SampleEventService_Property-11d60592-7d15-4934-9e23-f1b38df90fd5.xml"));
+		    	    String inLine;
+					while((inLine = in.readLine()) != null) {
+						input.add(inLine);
+					}
+					in.close();
+					
+					// write data
+					PrintWriter writer = new PrintWriter("rdf/SampleEventService_Property-11d60592-7d15-4934-9e23-f1b38df90fd5.xml", "UTF-8");
+					for(int j = 0; j < input.size(); j++) {
+						if(input.get(j).contains("hasValue")) {
+							writer.println("        <sao:hasValue>"+data[2]+"</sao:hasValue>");
+						} else {
+							writer.println(input.get(j));
+						}
+					}
+					writer.println();
+					writer.close();
+				}
+			}
+			
+			if((line = br3.readLine()) != null) {
+				hasNext = true;
+				// if at interval
+				if(++count3 == interval3) {
+					// reset counter
+					count3 = 0;
+					String[] data = line.split(",");
+					
+					// loop through the files need to be updated
+					// read data
+					ArrayList<String> input = new ArrayList<String>();
+					BufferedReader in = new BufferedReader(new FileReader("rdf/SampleEventService_parkingproperty-8.xml"));
+		    	    String inLine;
+					while((inLine = in.readLine()) != null) {
+						input.add(inLine);
+					}
+					in.close();
+					
+					// write data
+					PrintWriter writer = new PrintWriter("rdf/SampleEventService_parkingproperty-8.xml", "UTF-8");
+					for(int j = 0; j < input.size(); j++) {
+						if(input.get(j).contains("hasValue")) {
+							writer.println("        <sao:hasValue>"+data[0]+"</sao:hasValue>");
+						} else {
+							writer.println(input.get(j));
+						}
+					}
+					writer.println();
+					writer.close();
+				}
+			}
+			
+			if((line = br4.readLine()) != null) {
+				hasNext = true;
+				// if at interval
+				if(++count4 == interval4) {
+					// reset counter
+					count4 = 0;
+					String[] data = line.split(",");
+					
+					// loop through the files need to be updated
+					// read data
+					ArrayList<String> input = new ArrayList<String>();
+					BufferedReader in = new BufferedReader(new FileReader("rdf/user-007.xml"));
+		    	    String inLine;
+					while((inLine = in.readLine()) != null) {
+						input.add(inLine);
+					}
+					in.close();
+					
+					// write data
+					PrintWriter writer = new PrintWriter("rdf/user-007.xml", "UTF-8");
+					for(int j = 0; j < input.size(); j++) {
+						if(input.get(j).contains("hasLatitude")) {
+							writer.println("        <ct:hasLatitude>"+data[0]+"</ct:hasLatitude>");
+						} else if(input.get(j).contains("hasLongitude")){
+							writer.println("        <ct:hasLongitude>"+data[1]+"</ct:hasLongitude>");
 						} else {
 							writer.println(input.get(j));
 						}

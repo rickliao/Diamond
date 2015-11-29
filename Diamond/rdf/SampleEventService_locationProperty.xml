@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<rdf:RDF
+xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+xmlns:owl="http://www.w3.org/2002/07/owl#"
+xmlns:ct="http://www.insight-centre.org/citytraffic#"
+xmlns:ssn="http://purl.oclc.org/NET/ssnx/ssn#"
+xmlns:sao="http://purl.oclc.org/NET/sao#">
+
+    <owl:NamedIndividual rdf:about="http://localhost:8080/rdf/SampleEventService_locationProperty.xml">
+        <ssn:observedProperty rdf:resource="http://www.insight-centre.org/citytraffic#location"/>
+        <ssn:observedBy rdf:resource="http://localhost:8080/rdf/SampleEventService_UserLocationService.xml"/>
+        <sao:hasValue rdf:resource="http://localhost:8080/rdf/user-007.xml"/>
+    </owl:NamedIndividual>
+    
+</rdf:RDF>
