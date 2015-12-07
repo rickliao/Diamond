@@ -11,7 +11,7 @@ PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>
 PREFIX swrc: <http://swrc.ontoware.org/ontology#>
 select ?n ?p2 ?u
 where {
-?n dct:subject <http://dbpedia.org/resource/Category:Chancellors_of_Germany> .
-?p2 owl:sameAs ?n .
-?p2 <http://data.nytimes.com/elements/latest_use> ?u .
+	?n dct:subject <http://dbpedia.org/resource/Category:Chancellors_of_Germany> .
+	?p2 owl:sameAs ?n .
+	?p2 <http://data.nytimes.com/elements/latest_use> ?u .
 }

@@ -11,7 +11,7 @@ PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>
 PREFIX swrc: <http://swrc.ontoware.org/ontology#>
 select ?proceedings ?paper ?l 
 where {
-?proceedings swc:relatedToEvent <http://data.semanticweb.org/conference/eswc/2010> .
-?paper swc:isPartOf ?proceedings .
-?paper swrc:author ?l
+	?proceedings swc:relatedToEvent <http://data.semanticweb.org/conference/eswc/2010> .
+	?paper swc:isPartOf ?proceedings .
+	?paper swrc:author ?l
 }

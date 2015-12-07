@@ -11,7 +11,7 @@ PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>
 PREFIX swrc: <http://swrc.ontoware.org/ontology#>
 select ?a ?n 
 where {
-?a dbowl:artist <http://dbpedia.org/resource/Michael_Jackson> .
-?a rdf:type dbowl:Album .
-?a foaf:name ?n .
+	?a dbowl:artist <http://dbpedia.org/resource/Michael_Jackson> .
+	?a rdf:type dbowl:Album .
+	?a foaf:name ?n .
 }

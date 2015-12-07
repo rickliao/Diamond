@@ -11,7 +11,7 @@ PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>
 PREFIX swrc: <http://swrc.ontoware.org/ontology#>
 select ?x ?p
 where {
-?x dct:subject <http://dbpedia.org/resource/Category:FIFA_World_Cup-winning_countries> .
-?p dbprop:managerclubs ?x .
-?p dbprop:name "Luiz Felipe Scolari"@en .
+	?x dct:subject <http://dbpedia.org/resource/Category:FIFA_World_Cup-winning_countries> .
+	?p dbprop:managerclubs ?x .
+	?p dbprop:name "Luiz Felipe Scolari"@en .
 }

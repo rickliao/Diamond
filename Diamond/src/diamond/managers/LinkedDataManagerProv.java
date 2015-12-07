@@ -236,9 +236,14 @@ public class LinkedDataManagerProv {
      * @throws Exception
      */
     public SolutionSet runOptimisticExecution(List<URI> reDereference, LinkedDataCacheProv cache, boolean hasTimer, boolean verbose) throws Exception {
-    	Timer timer = new Timer();
-    	timer.start();
+    	Timer timerOptimistic = new Timer();
+    	double optimisticTime = 0;
+    	Timer timerEventual = new Timer();
+    	timerEventual.start();
     	for(int i = 0; i < reDereference.size(); i++) {
+    		// start timing for optimistic part
+    		timerOptimistic.start();
+    		
         	URI uri = reDereference.get(i);
         	List<RDFTriple> cachedTriples = cache.dereference(uri, query);
         	
@@ -272,7 +277,20 @@ public class LinkedDataManagerProv {
 			extractedNotBlank.removeAll(temp);
 			if(verbose) System.out.println("Add non-blank: " + extractedNotBlank);
 			
-			//insert into rete
+			//Calculate difference blank triples
+			List<List<RDFTriple>> diff = calculateBlankDifference(cachedBlank, extractedBlank);
+			if(verbose) System.out.println("Delete blank: " + diff.get(0));
+			if(verbose) System.out.println("Add blank: " + diff.get(1));
+			
+			// Stop timing optimistic after all the difference had been calculated
+			timerOptimistic.stop();
+			optimisticTime +=timerOptimistic.timeInSeconds();
+			
+			// update cache
+			cache.updateCache(extractedNotBlank, cachedNotBlank, uri, query);
+			cache.updateCache(diff.get(1), diff.get(0), uri, query);
+			
+			// insert into rete non-blank
 			for(RDFTriple triple: cachedNotBlank) {
 				if(!triple.getPredicate().getData().equals("http://null.null")) {
 					reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, uri));
@@ -282,16 +300,7 @@ public class LinkedDataManagerProv {
 				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
 			}
 			
-			//Calculate difference blank triples
-			List<List<RDFTriple>> diff = calculateBlankDifference(cachedBlank, extractedBlank);
-			if(verbose) System.out.println("Delete blank: " + diff.get(0));
-			if(verbose) System.out.println("Add blank: " + diff.get(1));
-			
-			//update cache
-			cache.updateCache(extractedNotBlank, cachedNotBlank, uri, query);
-			cache.updateCache(diff.get(1), diff.get(0), uri, query);
-			
-			//insert into rete
+			// insert into rete blank
 			for(RDFTriple triple: diff.get(0)) {
 				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(false, uri));
 			}
@@ -299,8 +308,11 @@ public class LinkedDataManagerProv {
 				reteNetwork.insertTokenIntoNetwork(triple.convertToTripleToken(true, uri));
 			}
         }
-    	timer.stop();
-    	if(hasTimer) System.out.println("Optimistic: " + timer.toString());
+    	timerEventual.stop();
+    	if(hasTimer) {
+    		System.out.println("Optimistic: " + optimisticTime);
+    		System.out.println("Eventual: " + timerEventual.toString());
+    	}
     	
     	// If there is something to dereference
     	if(reDereference.size() > 0) {

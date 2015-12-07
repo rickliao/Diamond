@@ -11,9 +11,9 @@ PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>
 PREFIX swrc: <http://swrc.ontoware.org/ontology#>
 select ?drug ?id ?s ?o ?sub
 where {
-?drug drugbank:drugCategory <http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugcategory/micronutrient> .
-?drug drugbank:casRegistryNumber ?id .
-?drug owl:sameAs ?s .
-?s foaf:name ?o .
-?s dct:subject ?sub .
+	?drug drugbank:drugCategory <http://wifo5-04.informatik.uni-mannheim.de/drugbank/resource/drugcategory/micronutrient> .
+	?drug drugbank:casRegistryNumber ?id .
+	?drug owl:sameAs ?s .
+	?s foaf:name ?o .
+	?s dct:subject ?sub .
 }

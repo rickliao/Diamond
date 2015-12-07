@@ -11,7 +11,7 @@ PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>
 PREFIX swrc: <http://swrc.ontoware.org/ontology#>
 select ?c ?x ?n
 where {
-<http://sws.geonames.org/2921044/> gn:childrenFeatures ?c .
-?x gn:parentFeature <http://sws.geonames.org/2921044/> .
-?x gn:name ?n .
+	<http://sws.geonames.org/2921044/> gn:childrenFeatures ?c .
+	?x gn:parentFeature <http://sws.geonames.org/2921044/> .
+	?x gn:name ?n .
 }

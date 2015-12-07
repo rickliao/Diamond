@@ -11,9 +11,9 @@ PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>
 PREFIX swrc: <http://swrc.ontoware.org/ontology#>
 select ?role ?p ?paper ?proceedings 
 where {
-?role swc:isRoleAt <http://data.semanticweb.org/conference/eswc/2010> .
-?role swc:heldBy ?p .
-?paper swrc:author ?p .
-?paper swc:isPartOf ?proceedings .
-?proceedings swc:relatedToEvent <http://data.semanticweb.org/conference/eswc/2010> .
+	?role swc:isRoleAt <http://data.semanticweb.org/conference/eswc/2010> .
+	?role swc:heldBy ?p .
+	?paper swrc:author ?p .
+	?paper swc:isPartOf ?proceedings .
+	?proceedings swc:relatedToEvent <http://data.semanticweb.org/conference/eswc/2010> .
 }

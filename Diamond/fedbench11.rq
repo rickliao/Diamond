@@ -11,9 +11,9 @@ PREFIX swc: <http://data.semanticweb.org/ns/swc/ontology#>
 PREFIX swrc: <http://swrc.ontoware.org/ontology#>
 select ?x ?y ?d ?p ?l
 where {
-?x dbowl:team <http://dbpedia.org/resource/Eintracht_Frankfurt> .
-?x rdfs:label ?y .
-?x dbowl:birthDate ?d .
-?x dbowl:birthPlace ?p .
-?p rdfs:label ?l .
+	?x dbowl:team <http://dbpedia.org/resource/Eintracht_Frankfurt> .
+	?x rdfs:label ?y .
+	?x dbowl:birthDate ?d .
+	?x dbowl:birthPlace ?p .
+	?p rdfs:label ?l .
 }
